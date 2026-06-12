@@ -1,0 +1,34 @@
+Make these landing page refinements:
+1. Stats row
+
+Change the three stats from all-caps to mixed case and darken the text:
+
+"26 assets generated" → font-size 14px, color #526056, font-weight 500
+"5–7 hours saved per episode" → same
+"SEO built into every asset" → same
+The dividers between stats: color #DADCD9
+
+2. Check the "What gets generated" section
+
+There appears to be a large empty gap between the stats row and the "How it works" section. The 6-category grid (Publishing & SEO, Email, Social Media, Amplification, Strategy, Episode Intelligence) should be filling that space. If it's missing or not rendering, rebuild it as a 3-column grid with these 6 cards — white background, border #DADCD9, border-radius 10px, padding 20px:
+Card 1 — Publishing & SEO: Show notes · SEO titles · Blog skeleton · YouTube description · Pinterest · Platform keywords
+
+Card 2 — Email: Newsletter draft · Subject lines · Guest thank-you email
+
+Card 3 — Social Media: Instagram captions · Hashtag strategy · Reel hooks · Carousel copy · Pinterest · Engagement prompts
+
+Card 4 — Amplification: Guest share package · Cross-promo pitch · Sponsor suggestions · Episode hooks
+
+Card 5 — Strategy: 90-day calendar · Week 1 schedule · Evergreen flag
+
+Card 6 — Episode Intelligence: Confidence score · Credibility guard · Transformation statement
+Each card: category name in #363633 font-weight 500 font-size 14px, asset list in #897866 font-size 12px line-height 1.9, each asset on its own line. A small lucide-react icon in #526056 above the category name.
+Section eyebrow above the grid: "What gets generated" — 11px uppercase letter-spacing 0.1em color #897866 centered
+
+Section headline: "26 assets across 6 categories." — Georgia serif font-weight 300 font-size 28px color #363633 centered margin-bottom 40px
+3. Subheadline color
+
+Change the subheadline text from light gray to #526056 — it's too faint at current color and deserves more presence.
+4. Generate button
+
+The generate button background is very dark — change to #526056 (forest) to match the brand better and differentiate from the dark sidebar in the app.

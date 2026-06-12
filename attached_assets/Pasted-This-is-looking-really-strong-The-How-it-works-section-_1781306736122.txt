@@ -1,0 +1,38 @@
+This is looking really strong. The How it works section is clean and professional, and the pricing section is excellent — the three-tier layout with the Pro card featured in dark is exactly right.
+A few things to refine. Tell Replit's agent:
+
+Make these refinements to the landing page:
+1. Fix the large empty gap
+
+There is a large empty space between the "How it works" section and the "Simple Pricing" section. The "What gets generated" 6-category grid should be filling that space. If it's not rendering, add it between those two sections now — use the spec from the previous request.
+2. How it works section
+
+The three columns look good but need small tweaks:
+
+Step numbers "01" "02" "03": change color to #526056 instead of current light gray
+Step titles: change to #363633 font-weight 500
+Vertical dividers between columns: make slightly more visible — color #DADCD9, opacity 1
+
+3. Pricing section refinements
+
+"SIMPLE PRICING" eyebrow: change color to #526056
+"Start free. Scale as you grow." headline: looks great — keep as is
+"No contracts. Cancel anytime." — change color to #526056
+Starter card: change the bullet point dots from · to proper checkmarks using lucide-react Check icon in #526056, size 14px
+Pro card: same checkmarks but in white
+Founding Member card: same checkmarks in #526056
+The "Join the waitlist" button on Founding Member card: fill it with #526056 background and white text instead of outlined — it should feel as compelling as the other CTAs
+"50 SPOTS ONLY" badge: change background to #526056, white text
+"MOST POPULAR" badge: change background to #526056, white text — currently looks like a different green that doesn't match brand
+Add the Listener Transformation Statement to the Pro features list: "Listener Transformation Statement"
+Add "Guest share package" to Pro features list
+The Starter card CTA button "Start 7-day free trial": change border and text color to #526056
+
+4. Footer
+
+Below the pricing section add a simple footer:
+
+"Wellcast Studio · Built by Aligned Marketing Co." centered
+Font-size 12px, color #CBD0CA
+Border-top 0.5px solid #DADCD9
+Padding 32px top and bottom

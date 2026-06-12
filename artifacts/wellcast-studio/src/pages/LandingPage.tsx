@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { FileText, Mail, Share2, Megaphone, Calendar, Sparkles } from "lucide-react";
 import EpisodeInputBar from "@/components/input/EpisodeInputBar";
 
 export default function LandingPage() {
@@ -38,7 +39,7 @@ export default function LandingPage() {
           <h1 className="font-serif font-light text-[40px] md:text-[52px] text-foreground leading-[1.1] mb-6 tracking-tight">
             What will you share today?
           </h1>
-          <p className="text-[17px] text-muted-foreground max-w-[560px] leading-[1.6]">
+          <p className="text-[17px] max-w-[560px] leading-[1.6]" style={{ color: "#526056" }}>
             AI-powered show notes, social content, email newsletters, SEO, and more — built exclusively for health and wellness podcasters.
           </p>
         </section>
@@ -50,15 +51,78 @@ export default function LandingPage() {
 
         {/* Stats Row */}
         <section className="mt-12 mb-20 px-6">
-          <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-border">
-            <div className="text-[13px] text-muted-foreground uppercase tracking-[0.08em] font-medium px-8 py-2 md:py-0 text-center">
+          <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 divide-y md:divide-y-0 md:divide-x" style={{ borderColor: "#DADCD9" }}>
+            <div className="px-8 py-2 md:py-0 text-center text-[14px] font-medium" style={{ color: "#526056" }}>
               26 assets generated
             </div>
-            <div className="text-[13px] text-muted-foreground uppercase tracking-[0.08em] font-medium px-8 py-2 md:py-0 text-center">
+            <div className="px-8 py-2 md:py-0 text-center text-[14px] font-medium" style={{ color: "#526056" }}>
               5–7 hours saved per episode
             </div>
-            <div className="text-[13px] text-muted-foreground uppercase tracking-[0.08em] font-medium px-8 py-2 md:py-0 text-center">
+            <div className="px-8 py-2 md:py-0 text-center text-[14px] font-medium" style={{ color: "#526056" }}>
               SEO built into every asset
+            </div>
+          </div>
+        </section>
+
+        {/* What gets generated */}
+        <section className="py-16 px-6">
+          <div className="max-w-[900px] mx-auto">
+            <div className="text-center mb-10">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] mb-4" style={{ color: "#897866" }}>
+                What gets generated
+              </span>
+              <h2 className="font-serif font-light text-[28px] leading-tight" style={{ color: "#363633" }}>
+                26 assets across 6 categories.
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                {
+                  icon: FileText,
+                  name: "Publishing & SEO",
+                  assets: ["Show notes", "SEO titles", "Blog skeleton", "YouTube description", "Pinterest", "Platform keywords"],
+                },
+                {
+                  icon: Mail,
+                  name: "Email",
+                  assets: ["Newsletter draft", "Subject lines", "Guest thank-you email"],
+                },
+                {
+                  icon: Share2,
+                  name: "Social Media",
+                  assets: ["Instagram captions", "Hashtag strategy", "Reel hooks", "Carousel copy", "Engagement prompts"],
+                },
+                {
+                  icon: Megaphone,
+                  name: "Amplification",
+                  assets: ["Guest share package", "Cross-promo pitch", "Sponsor suggestions", "Episode hooks"],
+                },
+                {
+                  icon: Calendar,
+                  name: "Strategy",
+                  assets: ["90-day calendar", "Week 1 schedule", "Evergreen flag"],
+                },
+                {
+                  icon: Sparkles,
+                  name: "Episode Intelligence",
+                  assets: ["Confidence score", "Credibility guard", "Transformation statement"],
+                },
+              ].map(({ icon: Icon, name, assets }) => (
+                <div
+                  key={name}
+                  className="flex flex-col p-5 rounded-[10px] bg-white"
+                  style={{ border: "1px solid #DADCD9" }}
+                >
+                  <Icon size={16} className="mb-3" style={{ color: "#526056" }} />
+                  <p className="text-[14px] font-medium mb-2" style={{ color: "#363633" }}>{name}</p>
+                  <ul style={{ color: "#897866", fontSize: "12px", lineHeight: "1.9" }}>
+                    {assets.map((a) => (
+                      <li key={a}>{a}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         </section>

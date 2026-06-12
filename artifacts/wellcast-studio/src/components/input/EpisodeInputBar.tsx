@@ -269,7 +269,8 @@ export default function EpisodeInputBar({ requireAuth = false, onGenerate }: Epi
           <Button
             data-testid="button-generate"
             onClick={handleGenerate}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 rounded-[10px] text-[15px] font-medium"
+            className="w-full py-6 rounded-[10px] text-[15px] font-medium text-white"
+            style={{ background: "#526056" }}
           >
             Generate 26 assets →
           </Button>
