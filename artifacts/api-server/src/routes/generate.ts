@@ -11,6 +11,7 @@ const GenerateBody = z.object({
   cta: z.string().optional().default(""),
   user_id: z.string(),
   run_id: z.string().optional(),
+  input_method: z.string().optional().default("transcript"),
 });
 
 const briefStr = (brief: Record<string, unknown>) =>
@@ -260,7 +261,7 @@ router.post("/generate", async (req, res): Promise<void> => {
     return;
   }
 
-  const { episode_brief, cta, user_id, run_id: incomingRunId } = parsed.data;
+  const { episode_brief, cta, user_id, run_id: incomingRunId, input_method } = parsed.data;
   const runId = incomingRunId ?? uuidv4();
 
   req.log.info({ user_id, run_id: runId }, "Starting asset generation");
@@ -332,6 +333,8 @@ router.post("/generate", async (req, res): Promise<void> => {
         episode_title: episodeTitle,
         health_niche: (brief["health_niche"] as string) ?? "",
         episode_type: (brief["episode_type"] as string) ?? "solo",
+        input_method,
+        episode_brief: brief,
         assets,
         confidence_score: scoreValue,
         credibility_flags: [],

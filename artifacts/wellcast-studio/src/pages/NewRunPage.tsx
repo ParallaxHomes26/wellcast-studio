@@ -49,6 +49,7 @@ export default function NewRunPage() {
           episode_brief: brief,
           cta,
           user_id: user.id,
+          input_method: inputMethod === "details" ? "manual" : inputMethod,
         }),
       });
 
@@ -57,8 +58,24 @@ export default function NewRunPage() {
         throw new Error(body.error ?? "Generation failed");
       }
 
-      const { run_id } = await generateRes.json() as { run_id: string };
-      setLocation(`/run/${run_id}`);
+      const result = await generateRes.json() as { run_id: string; assets: unknown };
+
+      // Bridge assets to the run page via sessionStorage (no Supabase round-trip needed)
+      const episodeTitle =
+        (brief as Record<string, unknown>)["core_topic"] as string
+        ?? (brief as Record<string, unknown>)["show_name"] as string
+        ?? "Untitled Episode";
+
+      try {
+        sessionStorage.setItem(
+          `wellcast_run_${result.run_id}`,
+          JSON.stringify({ run_id: result.run_id, episode_title: episodeTitle, assets: result.assets })
+        );
+      } catch {
+        // sessionStorage unavailable — RunDetailPage will fall back to API
+      }
+
+      setLocation(`/run/${result.run_id}`);
     } catch (err) {
       setGenerating(false);
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");

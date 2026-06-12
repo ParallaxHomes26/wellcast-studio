@@ -1,0 +1,50 @@
+That means the generation is running and the output screen is rendering — but the results aren't being saved to Supabase yet. The output screen is likely showing placeholder/mock data rather than real generated content.
+Two things to fix in one pass. Tell Replit's agent:
+
+There are two issues to fix:
+1. Episode runs are not being saved to Supabase
+
+The /api/generate route is not saving results to the episode_runs table. Check the Supabase insert logic in the generate route and fix it. Make sure it is using the service role key to write to Supabase, not the anon key. The insert should happen after all parallel prompts complete and should save:
+
+user_id from the authenticated session
+episode_title extracted from the brief
+episode_type from the brief
+health_niche from the brief
+input_method
+episode_brief as jsonb
+assets as jsonb containing all generated content
+status as 'complete'
+
+Use the Supabase service role client like this:
+javascriptimport { createClient } from '@supabase/supabase-js'
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+2. Output screen is showing lorem ipsum placeholder content instead of real generated assets
+
+The /run/[id] page is rendering mock data instead of the actual assets from the API response. Fix it so that:
+
+After generation completes the real assets object is passed to the run page
+Each asset card displays the actual generated content from the API response
+The content is readable and properly formatted — not JSON syntax, clean readable text
+Each card shows the full content with a scroll if it's long
+Each card has a copy button that copies the content to clipboard
+
+The asset cards should map to these real fields from the assets object:
+
+SHOW NOTES → assets.show_notes.full_summary + what_youll_learn + cta_block
+SEO TITLE PACK → assets.seo.recommended_title + title_variations
+BLOG SKELETON → assets.blog.h1 + sections summary
+EMAIL NEWSLETTER → assets.email.full_email
+INSTAGRAM CAPTIONS → assets.social.captions.story_open + insight_hook + direct_address
+CAROUSEL COPY → assets.carousel.slides formatted as slide list
+REEL HOOKS → assets.hooks.reel_hooks formatted as numbered list
+YOUTUBE DESCRIPTION → assets.youtube.full_description
+PINTEREST CAPTIONS → assets.pinterest.pin_title + pin_description
+HASHTAG SETS → assets.social.hashtags.recommended_stack + tier breakdowns
+GUEST SHARE KIT → assets.amplification.guest_share_package
+90-DAY CALENDAR → assets.strategy.ninety_day_calendar formatted clearly
+EPISODE SCORE → assets.intelligence.confidence_score
+CREDIBILITY GUARD → assets.intelligence.credibility_guard
+LISTENER TRANSFORMATION → assets.intelligence.transformation_statement
