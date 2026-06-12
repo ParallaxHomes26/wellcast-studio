@@ -283,17 +283,17 @@ router.post("/generate", async (req, res): Promise<void> => {
     strategy,
     intelligence,
   ] = await Promise.all([
-    callClaude(PROMPTS.show_notes(brief, cta)),
-    callClaude(PROMPTS.seo_titles(brief)),
-    callClaude(PROMPTS.blog_skeleton(brief)),
-    callClaude(PROMPTS.email(brief, cta)),
-    callClaude(PROMPTS.social(brief)),
-    callClaude(PROMPTS.carousel(brief)),
-    callClaude(PROMPTS.hooks(brief)),
-    callClaude(PROMPTS.platforms(brief)),
-    callClaude(PROMPTS.amplification(brief, cta)),
-    callClaude(PROMPTS.strategy(brief)),
-    callClaude(PROMPTS.intelligence(brief, cta)),
+    callClaude(PROMPTS.show_notes(brief, cta),    3000),
+    callClaude(PROMPTS.seo_titles(brief),          3000),
+    callClaude(PROMPTS.blog_skeleton(brief),        6000),
+    callClaude(PROMPTS.email(brief, cta),           5000),
+    callClaude(PROMPTS.social(brief),               2500),
+    callClaude(PROMPTS.carousel(brief),             3000),
+    callClaude(PROMPTS.hooks(brief),                2500),
+    callClaude(PROMPTS.platforms(brief),            3000),
+    callClaude(PROMPTS.amplification(brief, cta),   4000),
+    callClaude(PROMPTS.strategy(brief),             5000),
+    callClaude(PROMPTS.intelligence(brief, cta),    6000),
   ]);
 
   const assets = {

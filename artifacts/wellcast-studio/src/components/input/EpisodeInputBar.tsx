@@ -34,6 +34,7 @@ export default function EpisodeInputBar({ requireAuth = false, onGenerate }: Epi
   const [activeTab, setActiveTab] = useState<InputMethod>("transcript");
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
   // Transcript tab
   const [transcript, setTranscript] = useState("");
@@ -55,12 +56,28 @@ export default function EpisodeInputBar({ requireAuth = false, onGenerate }: Epi
   const ctaRef = useRef<HTMLInputElement>(null);
 
   const handleGenerate = () => {
+    setValidationError("");
+
     if (requireAuth) {
       setShowAuthModal(true);
       return;
     }
 
     if (!onGenerate) return;
+
+    // Input validation
+    if (activeTab === "transcript" && !transcript.trim()) {
+      setValidationError("Please paste your episode transcript before generating.");
+      return;
+    }
+    if (activeTab === "details" && !topic.trim()) {
+      setValidationError("Please enter an episode topic before generating.");
+      return;
+    }
+    if (activeTab === "url" && !url.trim()) {
+      setValidationError("Please enter an episode URL before generating.");
+      return;
+    }
 
     const ctaValue = ctaRef.current?.value ?? cta;
 
@@ -242,6 +259,12 @@ export default function EpisodeInputBar({ requireAuth = false, onGenerate }: Epi
               onChange={(e) => setCta(e.target.value)}
             />
           </div>
+
+          {validationError && (
+            <p className="text-[13px] text-red-600 mb-2" data-testid="text-validation-error">
+              {validationError}
+            </p>
+          )}
 
           <Button
             data-testid="button-generate"
