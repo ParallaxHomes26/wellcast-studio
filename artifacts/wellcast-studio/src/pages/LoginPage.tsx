@@ -1,51 +1,95 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLocation("/dashboard");
+    setError("");
+    setLoading(true);
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    setLoading(false);
+
+    if (signInError) {
+      setError("Invalid email or password. Please try again.");
+    } else {
+      setLocation("/dashboard");
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
-      <div className="w-full max-w-[400px]">
+      <div className="w-full max-w-[440px]">
         <div className="text-center mb-8">
-          <Link href="/" className="font-medium text-[20px] text-foreground tracking-tight inline-block hover:opacity-80 transition-opacity">
+          <Link href="/" className="font-medium text-[17px] text-foreground tracking-tight inline-block hover:opacity-80 transition-opacity">
             Wellcast Studio
           </Link>
         </div>
-        
+
         <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-          <h1 className="text-[20px] font-semibold text-foreground mb-6">Welcome back</h1>
-          
+          <h1 className="font-serif font-light text-[28px] text-foreground mb-2">Welcome back</h1>
+          <p className="text-[14px] text-muted-foreground mb-6">Sign in to your Wellcast Studio account</p>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
-              <Input id="email" type="email" placeholder="you@example.com" required />
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={error ? "border-red-500" : ""}
+                required
+                data-testid="input-email"
+              />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <a href="#" className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">Forgot password?</a>
+                <Link href="/forgot-password" className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                  Forgot password?
+                </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={error ? "border-red-500" : ""}
+                required
+                data-testid="input-password"
+              />
             </div>
-            
-            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 mt-2">
-              Sign in
+
+            {error && <p className="text-[12px] text-red-600">{error}</p>}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 rounded-[10px] text-[14px] mt-2"
+              data-testid="button-signin"
+            >
+              {loading ? "Signing in…" : "Sign in →"}
             </Button>
           </form>
-          
+
           <div className="mt-6 text-center text-[13px] text-muted-foreground">
             Don't have an account?{" "}
             <Link href="/signup" className="text-foreground font-medium hover:underline">
-              Start your free trial
+              Start free →
             </Link>
           </div>
         </div>

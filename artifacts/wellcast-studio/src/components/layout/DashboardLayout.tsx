@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { LayoutDashboard, Plus, BookOpen, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -9,10 +10,15 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location, setLocation] = useLocation();
+  const { user, signOut } = useAuth();
 
-  const handleSignout = () => {
+  const handleSignOut = async () => {
+    await signOut();
     setLocation("/");
   };
+
+  const displayName =
+    user?.user_metadata?.first_name ?? user?.email ?? "";
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -30,19 +36,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             Wellcast Studio
           </Link>
         </div>
-        
+
         <nav className="flex-1 py-6 px-3 space-y-1">
           {navItems.map((item) => {
-            const isActive = location === item.href || (location.startsWith("/run/") && item.href.includes("history"));
+            const isActive =
+              location === item.href ||
+              (location.startsWith("/run/") && item.label === "Episode History");
             const Icon = item.icon;
-            
+
             return (
-              <Link 
-                key={item.href} 
+              <Link
+                key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-[14px] font-medium transition-colors
-                  ${isActive 
-                    ? "bg-sidebar-primary/10 text-sidebar-primary" 
+                  ${isActive
+                    ? "bg-sidebar-primary/10 text-sidebar-primary"
                     : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/5"}`}
               >
                 <Icon size={18} />
@@ -59,17 +67,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="md:hidden font-medium text-[16px] text-foreground tracking-tight">
             Wellcast Studio
           </div>
-          <div className="hidden md:block" /> {/* Spacer */}
-          
+          <div className="hidden md:block" />
+
           <div className="flex items-center gap-4">
-            <span className="text-[13px] text-muted-foreground font-medium hidden sm:inline-block">jane@example.com</span>
-            <Button variant="ghost" size="sm" onClick={handleSignout} className="text-muted-foreground hover:text-foreground h-8 text-[13px]">
+            {displayName && (
+              <span className="text-[13px] text-muted-foreground font-medium hidden sm:inline-block" data-testid="text-user-display">
+                {displayName}
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-foreground h-8 text-[13px]"
+              data-testid="button-signout"
+            >
               <LogOut size={16} className="mr-2" />
               Sign out
             </Button>
           </div>
         </header>
-        
+
         <div className="flex-1 overflow-auto p-6 md:p-8">
           <div className="max-w-5xl mx-auto">
             {children}

@@ -1,0 +1,82 @@
+Yes — the landing page is in good shape for now. We move into the authentication flow next. This is Phase 1 completion — once auth is working, users can actually sign up, log in, and land on the dashboard. Everything after this builds on top of authenticated users.
+Here's what we need to build:
+Sign up flow — email + password, creates a Supabase user, sends email confirmation, redirects to dashboard
+
+Log in flow — email + password, authenticated session, redirects to dashboard
+
+Protected routes — dashboard, new-run, and account pages redirect to login if not authenticated
+
+Sign out — clears session, redirects to landing page
+Tell Replit's agent:
+
+Build the complete authentication flow using Supabase Auth.
+1. Sign up page (src/app/(auth)/signup/page.tsx)
+A centered card (max-width 440px, margin auto, padding-top 80px):
+
+Wellcast Studio wordmark at top, centered, links back to /
+Headline: "Create your account" — Georgia serif, font-weight 300, font-size 28px
+Subheadline: "7-day free trial. No credit card required." — #897866, font-size 14px
+Form fields:
+
+First name (text input)
+Email address (email input)
+Password (password input, min 8 characters)
+Confirm password (password input)
+
+
+"Create my account →" button — full width, #363633 background, white text, border-radius 10px, padding 14px
+Error state: red border on invalid fields, error message below in #dc2626 font-size 12px
+Success state: after signup show a message "Check your email to confirm your account — then come back to sign in." in a green-tinted box
+Below the form: "Already have an account? Sign in →" link to /login
+On successful signup: call supabase.auth.signUp() with email and password, passing first_name in the metadata
+
+2. Login page (src/app/(auth)/login/page.tsx)
+Same centered card layout:
+
+Headline: "Welcome back"
+Subheadline: "Sign in to your Wellcast Studio account"
+Form fields: Email address, Password
+"Sign in →" button — full width, #363633 background
+"Forgot password?" text link below the button, color #897866
+Error state: "Invalid email or password" message if login fails
+Below form: "Don't have an account? Start free →" link to /signup
+On successful login: call supabase.auth.signInWithPassword(), redirect to /dashboard
+
+3. Forgot password page (src/app/(auth)/forgot-password/page.tsx)
+Simple centered card:
+
+Headline: "Reset your password"
+Subheadline: "Enter your email and we'll send you a reset link."
+Email input + "Send reset link →" button
+Success state: "Check your email for a reset link."
+Call supabase.auth.resetPasswordForEmail() on submit
+
+4. Protected route middleware (src/middleware.ts)
+Create a Next.js middleware file that:
+
+Checks for a valid Supabase session on every request to /dashboard, /new-run, /run/*, and /account
+Redirects unauthenticated users to /login
+Redirects authenticated users away from /login and /signup to /dashboard
+Uses @supabase/auth-helpers-nextjs createMiddlewareClient
+
+5. Auth callback route (src/app/auth/callback/route.ts)
+Create an API route that handles the Supabase email confirmation callback:
+
+Exchanges the code for a session
+Redirects to /dashboard on success
+Redirects to /login on error
+
+6. Update the dashboard header
+In the dashboard shell already built, wire up the sign out button:
+
+Call supabase.auth.signOut() on click
+Redirect to / (landing page) after sign out
+Display the user's email or first name from the session in the header
+
+7. Update the landing page header buttons
+
+"Sign in" link → href="/login"
+"Start free — 7 days" button → href="/signup"
+The "Create my account →" button inside the generate modal → href="/signup"
+
+Use @supabase/auth-helpers-nextjs throughout for session handling. All form inputs should use React controlled state. Show a loading spinner on buttons while async operations are in progress. Make sure all pages are fully responsive.

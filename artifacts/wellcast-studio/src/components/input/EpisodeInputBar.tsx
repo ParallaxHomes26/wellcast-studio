@@ -180,13 +180,20 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label htmlFor="modal-email">Email address</Label>
-              <Input id="modal-email" type="email" placeholder="you@example.com" />
-            </div>
-            <Button className="w-full bg-accent text-white hover:bg-accent/90">
+            <a
+              href="/signup"
+              className="block w-full py-3 px-4 bg-accent text-white text-center text-[14px] font-medium rounded-lg hover:bg-accent/90 transition-colors"
+              data-testid="link-modal-signup"
+            >
               Create my account →
-            </Button>
+            </a>
+            <a
+              href="/login"
+              className="block text-center text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="link-modal-signin"
+            >
+              Already have an account? Sign in →
+            </a>
           </div>
         </DialogContent>
       </Dialog>
