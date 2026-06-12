@@ -32,8 +32,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside className="w-[220px] bg-sidebar border-r border-sidebar-border hidden md:flex flex-col shrink-0">
         <div className="h-[60px] flex items-center px-6 border-b border-sidebar-border">
-          <Link href="/dashboard" className="font-medium text-[16px] text-sidebar-foreground tracking-tight">
-            Wellcast Studio
+          <Link href="/dashboard" className="flex items-center">
+            <img
+              src="/api/storage/public-objects/wellcast-logo.png"
+              alt="Wellcast Studio"
+              className="h-7 w-auto"
+              onError={(e) => {
+                const img = e.currentTarget as HTMLImageElement;
+                img.style.display = "none";
+                const span = document.createElement("span");
+                span.className = "font-medium text-[16px] text-sidebar-foreground tracking-tight";
+                span.textContent = "Wellcast Studio";
+                img.parentNode?.appendChild(span);
+              }}
+            />
           </Link>
         </div>
 
@@ -64,8 +76,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-[60px] bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
-          <div className="md:hidden font-medium text-[16px] text-foreground tracking-tight">
-            Wellcast Studio
+          <div className="md:hidden">
+            <img
+              src="/api/storage/public-objects/wellcast-logo.png"
+              alt="Wellcast Studio"
+              className="h-6 w-auto"
+              onError={(e) => {
+                const img = e.currentTarget as HTMLImageElement;
+                img.style.display = "none";
+                const span = document.createElement("span");
+                span.className = "font-medium text-[16px] text-foreground tracking-tight";
+                span.textContent = "Wellcast Studio";
+                img.parentNode?.appendChild(span);
+              }}
+            />
           </div>
           <div className="hidden md:block" />
 

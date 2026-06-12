@@ -40,8 +40,20 @@ export default function LandingPage() {
     <div className="min-h-screen flex flex-col bg-background font-sans">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="font-medium text-[17px] text-foreground tracking-tight">
-          Wellcast Studio
+        <div className="flex items-center">
+          <img
+            src="/api/storage/public-objects/wellcast-logo.png"
+            alt="Wellcast Studio"
+            className="h-7 w-auto"
+            onError={(e) => {
+              const img = e.currentTarget as HTMLImageElement;
+              img.style.display = "none";
+              const span = document.createElement("span");
+              span.className = "font-medium text-[17px] text-foreground tracking-tight";
+              span.textContent = "Wellcast Studio";
+              img.parentNode?.appendChild(span);
+            }}
+          />
         </div>
         <div className="flex items-center gap-6">
           <a href="#pricing" className="text-[14px] text-muted-foreground hover:text-foreground font-medium transition-colors no-underline">
