@@ -222,7 +222,7 @@ function PublishingTab({ assets }: { assets: Assets }) {
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#526056] mr-2">
               Recommended
             </span>
-            <span className="font-medium text-foreground">{str(seo.recommended_title)}</span>
+            <span className="font-semibold text-[#363633]">{str(seo.recommended_title)}</span>
             {!!seo.recommended_reason && (
               <p className="mt-1 text-[12px] text-muted-foreground">{str(seo.recommended_reason)}</p>
             )}
@@ -236,7 +236,7 @@ function PublishingTab({ assets }: { assets: Assets }) {
                 {str(vr.formula)}
               </span>
               <span className="text-[13px]">{str(vr.title)}</span>
-              {!!vr.why && <p className="text-[12px] text-muted-foreground ml-0 mt-0.5">{str(vr.why)}</p>}
+              {!!vr.why && <p className="text-[12px] text-[#526056] ml-0 mt-0.5">{str(vr.why)}</p>}
             </div>
           );
         })}
@@ -250,7 +250,7 @@ function PublishingTab({ assets }: { assets: Assets }) {
       {/* Show Notes */}
       <AssetSection label="Show Notes" copyText={snCopy}>
         {!!sn.hook_sentence && <p className="font-medium mb-3">{str(sn.hook_sentence)}</p>}
-        {!!sn.full_summary && <p className="text-muted-foreground mb-3">{str(sn.full_summary)}</p>}
+        {!!sn.full_summary && <p className="text-[#363633] mb-3">{str(sn.full_summary)}</p>}
         {arr(sn.what_youll_learn).length > 0 && (
           <div className="mb-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
@@ -260,7 +260,7 @@ function PublishingTab({ assets }: { assets: Assets }) {
               {arr(sn.what_youll_learn).map((item, i) => (
                 <li key={i} className="flex gap-2 text-[13px]">
                   <span className="text-[#526056] font-bold shrink-0">•</span>
-                  <span>{str(item)}</span>
+                  <span className="text-[#363633]">{str(item)}</span>
                 </li>
               ))}
             </ul>
@@ -271,13 +271,13 @@ function PublishingTab({ assets }: { assets: Assets }) {
             "{str(sn.pull_quote)}"
           </blockquote>
         )}
-        {!!sn.cta_block && <p className="text-[13px]">{str(sn.cta_block)}</p>}
+        {!!sn.cta_block && <p className="text-[13px] text-[#363633]">{str(sn.cta_block)}</p>}
       </AssetSection>
 
       {/* Blog Skeleton */}
       <AssetSection label="Blog Skeleton" copyText={blogCopy}>
         {!!blog.h1 && <p className="font-semibold text-[15px] mb-1">{str(blog.h1)}</p>}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted-foreground mb-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[#363633] mb-3">
           {!!blog.meta_description && <span><strong>Meta:</strong> {str(blog.meta_description)}</span>}
           {!!blog.target_keyword && <span><strong>Keyword:</strong> {str(blog.target_keyword)}</span>}
           {!!blog.word_count_target && <span><strong>Target:</strong> {str(blog.word_count_target)} words</span>}
@@ -298,7 +298,7 @@ function PublishingTab({ assets }: { assets: Assets }) {
         })}
         {arr(blog.faq).length > 0 && (
           <div className="mt-2 pt-2 border-t border-border/50">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-2">FAQ</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#363633] mb-2">FAQ</p>
             {arr(blog.faq).map((f, i) => {
               const fr = asR(f);
               return (
@@ -321,7 +321,7 @@ function PublishingTab({ assets }: { assets: Assets }) {
           </div>
         )}
         {!!yt.full_description && (
-          <pre className="whitespace-pre-wrap font-sans text-[13px] text-muted-foreground">
+          <pre className="whitespace-pre-wrap font-sans text-[13px] text-[#363633]">
             {str(yt.full_description)}
           </pre>
         )}
@@ -335,7 +335,7 @@ function PublishingTab({ assets }: { assets: Assets }) {
       {/* Pinterest */}
       <AssetSection label="Pinterest" copyText={pinCopy}>
         {!!pin.pin_title && <p className="font-semibold mb-2">{str(pin.pin_title)}</p>}
-        {!!pin.pin_description && <p className="text-muted-foreground mb-2">{str(pin.pin_description)}</p>}
+        {!!pin.pin_description && <p className="text-[#363633] mb-2">{str(pin.pin_description)}</p>}
         {arr(pin.keywords).length > 0 && (
           <p className="text-[12px] text-muted-foreground">
             <strong>Keywords:</strong> {arr(pin.keywords).map(str).join(", ")}
@@ -574,7 +574,7 @@ function SocialTab({ assets }: { assets: Assets }) {
                 </span>
               </div>
               <p className="font-medium text-[13px]">{str(sr.headline)}</p>
-              <p className="text-[13px] text-muted-foreground mt-0.5">{str(sr.body)}</p>
+              <p className="text-[13px] text-[#363633] mt-0.5">{str(sr.body)}</p>
               {!!sr.design_note && (
                 <p className="text-[11px] italic text-muted-foreground/70 mt-1">
                   Design: {str(sr.design_note)}
@@ -816,7 +816,7 @@ function StrategyTab({ assets }: { assets: Assets }) {
                 {arr(w1[day]).map((a, i) => (
                   <li key={i} className="flex gap-2 text-[13px]">
                     <span className="text-[#526056] font-bold shrink-0">•</span>
-                    <span>{str(a)}</span>
+                    <span className="text-[#363633]">{str(a)}</span>
                   </li>
                 ))}
               </ul>
@@ -836,7 +836,7 @@ function StrategyTab({ assets }: { assets: Assets }) {
                 {arr(cal[key]).map((a, i) => (
                   <li key={i} className="flex gap-2 text-[13px]">
                     <span className="text-[#526056] font-bold shrink-0">•</span>
-                    <span>{str(a)}</span>
+                    <span className="text-[#363633]">{str(a)}</span>
                   </li>
                 ))}
               </ul>
@@ -970,7 +970,7 @@ function IntelligenceTab({ assets }: { assets: Assets }) {
           <div className="flex items-center gap-3 mb-3">
             <SignalPill signal={str(cs.overall_signal)} />
             {!!cs.overall_summary && (
-              <p className="text-[13px] text-muted-foreground">{str(cs.overall_summary)}</p>
+              <p className="text-[13px] text-[#363633]">{str(cs.overall_summary)}</p>
             )}
           </div>
         )}
@@ -1180,7 +1180,7 @@ export default function RunDetailPage() {
             >
               <ArrowLeft className="h-3 w-3" /> Dashboard
             </Link>
-            <p className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2 mb-2">
+            <p className="text-[13px] font-semibold text-[#363633] leading-snug line-clamp-2 mb-2">
               {runData.episode_title}
             </p>
             <span className="inline-flex items-center text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full border border-green-200">

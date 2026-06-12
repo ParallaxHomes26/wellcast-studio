@@ -36,10 +36,10 @@ export default function LandingPage() {
             Built for health and wellness podcasters
           </span>
           <h1 className="font-serif font-light text-[40px] md:text-[52px] text-foreground leading-[1.1] mb-6 tracking-tight">
-            Every asset. One episode. Two minutes.
+            What will you share today?
           </h1>
           <p className="text-[17px] text-muted-foreground max-w-[560px] leading-[1.6]">
-            Paste your transcript, enter your episode details, or drop a URL — and walk away with 26 content assets ready to publish, schedule, and share.
+            AI-powered show notes, social content, email newsletters, SEO, and more — built exclusively for health and wellness podcasters.
           </p>
         </section>
 
