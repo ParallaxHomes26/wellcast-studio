@@ -48,20 +48,6 @@ export default function LandingPage() {
           <EpisodeInputBar requireAuth={true} />
         </section>
 
-        {/* Asset Preview Strip */}
-        <section className="mt-8 px-6">
-          <div className="max-w-[720px] mx-auto flex flex-wrap gap-2 pb-2">
-            {PREVIEW_ASSETS.map((asset, i) => (
-              <div
-                key={i}
-                className="inline-flex items-center justify-center text-[11px] font-medium px-3 py-1 rounded-full bg-card border border-border text-accent shadow-sm"
-              >
-                {asset}
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Stats Row */}
         <section className="mt-12 mb-20 px-6">
           <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-border">
@@ -78,41 +64,34 @@ export default function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section className="mt-20 px-6 max-w-[600px] mx-auto">
-          <h2 className="text-center text-[15px] font-medium text-foreground mb-10">How it works</h2>
-          
-          <div className="space-y-12 relative before:absolute before:inset-0 before:ml-[15px] md:before:ml-[19px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-[2px] before:bg-border">
-            
-            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-4 border-background bg-accent text-white text-[12px] font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 shadow-sm">
-                1
-              </div>
-              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2rem)] bg-card border border-border p-5 rounded-xl shadow-sm">
-                <h3 className="font-semibold text-foreground text-[15px] mb-2">Bring your episode</h3>
-                <p className="text-muted-foreground text-[14px] leading-relaxed">Paste your transcript, fill in your details, or drop a URL. Any format works.</p>
-              </div>
-            </div>
-            
-            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-4 border-background bg-card text-foreground border-[1px] border-border text-[12px] font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 shadow-sm">
-                2
-              </div>
-              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2rem)] bg-card border border-border p-5 rounded-xl shadow-sm">
-                <h3 className="font-semibold text-foreground text-[15px] mb-2">Hit generate</h3>
-                <p className="text-muted-foreground text-[14px] leading-relaxed">26 assets build in parallel in under 2 minutes. SEO, social, email, strategy — all of it.</p>
-              </div>
+        <section className="py-20 px-6">
+          <div className="max-w-[800px] mx-auto">
+            <div className="text-center mb-12">
+              <span className="uppercase tracking-[0.1em] text-[11px] font-semibold text-accent mb-3 block">
+                How it works
+              </span>
+              <h2 className="font-serif font-light text-[28px] text-foreground">
+                From episode to everywhere — in two minutes.
+              </h2>
             </div>
 
-            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-full border-4 border-background bg-card text-foreground border-[1px] border-border text-[12px] font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 shadow-sm">
-                3
+            <div className="grid grid-cols-1 md:grid-cols-3">
+              <div className="px-8 first:pl-0 last:pr-0 md:border-r border-border last:border-0 pb-10 md:pb-0">
+                <p className="text-[11px] font-semibold tracking-[0.1em] text-muted mb-3">01</p>
+                <h3 className="text-[16px] font-medium text-foreground mb-2">Bring your episode</h3>
+                <p className="text-[13px] text-muted-foreground leading-[1.7]">Paste your transcript, fill in your episode details, or drop a URL. Any format works — raw text, timestamps included.</p>
               </div>
-              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2rem)] bg-card border border-border p-5 rounded-xl shadow-sm">
-                <h3 className="font-semibold text-foreground text-[15px] mb-2">Publish and grow</h3>
-                <p className="text-muted-foreground text-[14px] leading-relaxed">Copy, deploy, and follow your 90-day repurposing calendar. Your episode works for months, not hours.</p>
+              <div className="px-8 md:border-r border-border last:border-0 pb-10 md:pb-0">
+                <p className="text-[11px] font-semibold tracking-[0.1em] text-muted mb-3">02</p>
+                <h3 className="text-[16px] font-medium text-foreground mb-2">Generate in minutes</h3>
+                <p className="text-[13px] text-muted-foreground leading-[1.7]">26 assets build in parallel in under two minutes. SEO, social, email, amplification, and your 90-day strategy — all of it, done.</p>
+              </div>
+              <div className="px-8 last:pr-0">
+                <p className="text-[11px] font-semibold tracking-[0.1em] text-muted mb-3">03</p>
+                <h3 className="text-[16px] font-medium text-foreground mb-2">Publish and grow</h3>
+                <p className="text-[13px] text-muted-foreground leading-[1.7]">Copy each asset directly, follow your week-by-week deployment schedule, and let your 90-day repurposing calendar keep the episode working long after launch.</p>
               </div>
             </div>
-
           </div>
         </section>
         {/* Pricing */}
