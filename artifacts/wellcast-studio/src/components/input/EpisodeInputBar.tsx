@@ -10,16 +10,17 @@ interface EpisodeInputBarProps {
 }
 
 const HEALTH_NICHES = [
-  "Women's health",
-  "Hormones",
-  "Fertility",
-  "Pregnancy",
-  "Birth",
-  "Motherhood",
-  "Mental health",
-  "Fitness",
-  "Nutrition",
-  "Integrative wellness"
+  "Women's Health", "Hormones", "Fertility", "Pregnancy", "Birth", "Postpartum",
+  "Motherhood", "Pediatric Health", "Men's Health", "Mental Health", "Anxiety & Stress",
+  "Trauma & Healing", "Relationships", "Eating & Body Image", "Sleep", "Fatigue & Energy",
+  "Thyroid", "Adrenal Health", "Blood Sugar & Metabolic", "Gut Health & Digestion",
+  "Nutrition", "Anti-Inflammatory", "Autoimmune", "Chronic Illness", "Chronic Pain",
+  "Nervous System", "Functional Medicine", "Integrative Wellness", "Naturopathic",
+  "Herbal Medicine", "Detox & Cleansing", "Fitness & Movement", "Yoga & Mindfulness",
+  "Longevity & Aging", "Skin Health", "Cycle Syncing", "Perimenopause", "Menopause",
+  "Endometriosis", "PCOS", "Infertility", "Miscarriage & Loss", "Breastfeeding",
+  "Child Development", "Neurodivergence", "Addiction & Recovery", "Grief & Loss",
+  "Spiritual Wellness", "General Wellness",
 ];
 
 export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBarProps) {
@@ -110,20 +111,25 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
 
               <div className="space-y-2">
                 <Label>Health niche</Label>
-                <div className="flex flex-wrap gap-2">
-                  {HEALTH_NICHES.map(niche => (
-                    <button
-                      key={niche}
-                      data-testid={`niche-${niche.replace(/\s+/g, '-').toLowerCase()}`}
-                      onClick={() => toggleNiche(niche)}
-                      className={`text-[12px] rounded-full px-[14px] py-1 border transition-colors
-                        ${selectedNiches.includes(niche) 
-                          ? "bg-accent text-white border-accent" 
-                          : "border-border text-foreground hover:border-muted-foreground"}`}
-                    >
-                      {niche}
-                    </button>
-                  ))}
+                <div className="relative">
+                  <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto pr-1 pb-6"
+                    style={{ scrollbarWidth: "thin", scrollbarColor: "#DADCD9 transparent" }}
+                  >
+                    {HEALTH_NICHES.map(niche => (
+                      <button
+                        key={niche}
+                        data-testid={`niche-${niche.replace(/[\s&]+/g, '-').toLowerCase()}`}
+                        onClick={() => toggleNiche(niche)}
+                        className={`text-[12px] rounded-full px-[14px] py-1 border transition-colors shrink-0
+                          ${selectedNiches.includes(niche)
+                            ? "bg-accent text-white border-accent"
+                            : "bg-card border-border text-[#897866] hover:border-muted-foreground"}`}
+                      >
+                        {niche}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none rounded-b" />
                 </div>
               </div>
             </div>
