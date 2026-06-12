@@ -1,0 +1,62 @@
+The generation is working and the output is rendering — but it's still not saving to Supabase. The assets are being returned directly to the client without going through the database save step.
+This is likely because the run page is displaying results from the API response in memory rather than fetching from Supabase. We need to fix the save logic.
+Tell Replit's agent:
+
+The generation is working and assets are rendering correctly on the output screen, but episode runs are not being saved to Supabase. The episode_runs table remains empty after every run.
+Please fix the database save logic:
+1. In /api/generate/route.ts
+After all Promise.all() prompts complete, add this save logic using the service role client:
+javascriptconst supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+const { data: savedRun, error: saveError } = await supabaseAdmin
+  .from('episode_runs')
+  .insert({
+    user_id: userId,
+    episode_title: episodeBrief?.core_topic || 'Untitled Episode',
+    episode_type: episodeBrief?.episode_type || 'solo',
+    health_niche: episodeBrief?.health_niche || 'general_wellness',
+    input_method: inputMethod,
+    episode_brief: episodeBrief,
+    assets: allAssets,
+    status: 'complete'
+  })
+  .select()
+  .single()
+
+if (saveError) {
+  console.error('Supabase save error:', saveError)
+}
+Make sure userId is being passed in the request body from the frontend and is correctly extracted with const { userId, episodeBrief, cta, inputMethod } = await request.json()
+2. In the New Run page
+Make sure the frontend is sending user_id in the request body when calling /api/generate. Get the user ID from the Supabase session:
+javascriptconst { data: { session } } = await supabase.auth.getSession()
+const userId = session?.user?.id
+Then include it in the fetch body:
+javascriptbody: JSON.stringify({
+  episode_brief: brief,
+  cta: ctaValue,
+  user_id: userId,
+  input_method: 'transcript'
+})
+3. After saving, return the run ID
+Return the saved run ID in the API response:
+javascriptreturn NextResponse.json({ 
+  assets: allAssets,
+  run_id: savedRun?.id 
+})
+4. In the New Run page, after generation completes
+Use the returned run_id to redirect to the correct URL:
+javascriptconst result = await response.json()
+router.push(`/run/${result.run_id}`)
+5. In the /run/[id] page
+Fetch the run data from Supabase using the ID from the URL params:
+javascriptconst { data: run } = await supabase
+  .from('episode_runs')
+  .select('*')
+  .eq('id', params.id)
+  .single()
+Then render assets from run.assets instead of from router state or memory.
+This ensures every run is saved to Supabase, the URL contains the real run ID, and the output page fetches from the database — so runs are accessible from Episode History and persist across sessions.
