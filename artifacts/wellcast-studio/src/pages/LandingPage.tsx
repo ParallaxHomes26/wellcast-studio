@@ -42,7 +42,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center">
           <img
-            src="/api/storage/public-objects/wellcast-logo.png"
+            src="/api/storage/public-objects/Logos/wellcast-logo.png"
             alt="Wellcast Studio"
             className="h-7 w-auto"
             onError={(e) => {

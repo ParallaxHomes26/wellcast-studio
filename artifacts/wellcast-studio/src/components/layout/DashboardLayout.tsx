@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="h-[60px] flex items-center px-6 border-b border-sidebar-border">
           <Link href="/dashboard" className="flex items-center">
             <img
-              src="/api/storage/public-objects/wellcast-logo.png"
+              src="/api/storage/public-objects/Logos/wellcast-logo.png"
               alt="Wellcast Studio"
               className="h-7 w-auto"
               onError={(e) => {
@@ -78,7 +78,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className="h-[60px] bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
           <div className="md:hidden">
             <img
-              src="/api/storage/public-objects/wellcast-logo.png"
+              src="/api/storage/public-objects/Logos/wellcast-logo.png"
               alt="Wellcast Studio"
               className="h-6 w-auto"
               onError={(e) => {
