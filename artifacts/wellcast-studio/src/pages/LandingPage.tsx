@@ -17,6 +17,9 @@ export default function LandingPage() {
           Wellcast Studio
         </div>
         <div className="flex items-center gap-6">
+          <a href="#pricing" className="text-[14px] text-muted-foreground hover:text-foreground font-medium transition-colors no-underline">
+            Pricing
+          </a>
           <Link href="/login" className="text-[14px] text-muted-foreground hover:text-foreground font-medium transition-colors">
             Sign in
           </Link>
@@ -113,7 +116,7 @@ export default function LandingPage() {
           </div>
         </section>
         {/* Pricing */}
-        <section className="mt-24 px-6">
+        <section id="pricing" className="mt-24 px-6">
           <div className="max-w-[900px] mx-auto">
             <div className="text-center mb-12">
               <span className="uppercase tracking-[0.1em] text-[11px] font-semibold text-accent mb-4 block">
