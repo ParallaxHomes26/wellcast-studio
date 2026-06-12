@@ -10,6 +10,7 @@ import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import AuthCallbackPage from "@/pages/AuthCallbackPage";
 import DashboardPage from "@/pages/DashboardPage";
 import NewRunPage from "@/pages/NewRunPage";
 import RunDetailPage from "@/pages/RunDetailPage";
@@ -35,6 +36,7 @@ function Router() {
       </Route>
 
       <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/auth/callback" component={AuthCallbackPage} />
 
       <Route path="/dashboard">
         <ProtectedRoute>
