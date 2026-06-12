@@ -1,9 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "wouter";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { ArrowLeft, CheckCircle2, Copy, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Copy,
+  Check,
+  Download,
+  ClipboardList,
+} from "lucide-react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Assets = Record<string, unknown>;
 
@@ -13,343 +20,78 @@ interface RunData {
   assets: Assets;
 }
 
-// ─── Asset content formatters ────────────────────────────────────────────────
+type TabId =
+  | "publishing"
+  | "email"
+  | "social"
+  | "amplification"
+  | "strategy"
+  | "intelligence";
 
-type R = Record<string, unknown>;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const str = (v: unknown) => (typeof v === "string" ? v : "");
+const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-const asR = (v: unknown): R => (v && typeof v === "object" && !Array.isArray(v) ? (v as R) : {});
+const asR = (v: unknown): Record<string, unknown> =>
+  v && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : {};
 
-function bulletList(items: unknown[]): string {
+function bullets(items: unknown[]): string {
   return items.map((i) => `• ${str(i)}`).join("\n");
 }
 
-function getContent(key: string, assets: Assets): string {
-  switch (key) {
-    case "show_notes": {
-      const sn = asR(assets.show_notes);
-      const parts: string[] = [];
-      if (sn.hook_sentence) parts.push(str(sn.hook_sentence));
-      if (sn.full_summary) parts.push("\n" + str(sn.full_summary));
-      if (arr(sn.what_youll_learn).length) {
-        parts.push("\nWhat You'll Learn:\n" + bulletList(arr(sn.what_youll_learn)));
-      }
-      if (sn.pull_quote) parts.push("\n💬 " + str(sn.pull_quote));
-      if (sn.cta_block) parts.push("\n" + str(sn.cta_block));
-      return parts.join("\n").trim();
-    }
+// ─── Signal pill ──────────────────────────────────────────────────────────────
 
-    case "seo_titles": {
-      const seo = asR(assets.seo_titles);
-      const parts: string[] = [];
-      if (seo.recommended_title) parts.push(`⭐ Recommended: ${str(seo.recommended_title)}`);
-      if (seo.recommended_reason) parts.push(str(seo.recommended_reason));
-      const variations = arr(seo.title_variations);
-      if (variations.length) {
-        parts.push("\nAll Title Variations:");
-        variations.forEach((v, i) => {
-          const vr = asR(v);
-          parts.push(`${i + 1}. [${str(vr.formula)}] ${str(vr.title)}${vr.search_rating ? ` ★${vr.search_rating}/5` : ""}`);
-          if (vr.why) parts.push(`   ${str(vr.why)}`);
-        });
-      }
-      if (arr(seo.apple_keywords).length)
-        parts.push(`\nApple Podcasts Keywords:\n${arr(seo.apple_keywords).map(str).join(", ")}`);
-      if (arr(seo.spotify_keywords).length)
-        parts.push(`\nSpotify Keywords:\n${arr(seo.spotify_keywords).map(str).join(", ")}`);
-      if (seo.short_description) parts.push(`\nShort Description: ${str(seo.short_description)}`);
-      return parts.join("\n").trim();
-    }
-
-    case "blog_skeleton": {
-      const blog = asR(assets.blog_skeleton);
-      const parts: string[] = [];
-      if (blog.h1) parts.push(`H1: ${str(blog.h1)}`);
-      if (blog.meta_description) parts.push(`Meta: ${str(blog.meta_description)}`);
-      if (blog.target_keyword) parts.push(`Target Keyword: ${str(blog.target_keyword)}`);
-      if (blog.word_count_target) parts.push(`Word Count: ${str(blog.word_count_target)}`);
-      arr(blog.sections).forEach((s) => {
-        const sr = asR(s);
-        parts.push(`\n## ${str(sr.h2)}`);
-        if (sr.writing_direction) parts.push(`  ${str(sr.writing_direction)}`);
-        arr(sr.h3_subsections).forEach((h) => {
-          const hr = asR(h);
-          parts.push(`  ### ${str(hr.h3)}`);
-        });
-        if (sr.featured_snippet_opportunity)
-          parts.push(`  Featured Snippet: ${str(sr.featured_snippet_opportunity)}`);
-      });
-      const faqs = arr(blog.faq);
-      if (faqs.length) {
-        parts.push("\nFAQ:");
-        faqs.forEach((f) => {
-          const fr = asR(f);
-          parts.push(`Q: ${str(fr.question)}\nA: ${str(fr.answer)}`);
-        });
-      }
-      return parts.join("\n").trim();
-    }
-
-    case "email": {
-      const em = asR(assets.email);
-      const parts: string[] = [];
-      const sl = asR(em.subject_lines);
-      if (sl.recommended)
-        parts.push(`⭐ Recommended subject (${str(sl.recommended)}): ${str((sl as R)[str(sl.recommended)] ?? "")}`);
-      if (sl.direct) parts.push(`Direct: ${str(sl.direct)}`);
-      if (sl.curiosity) parts.push(`Curiosity: ${str(sl.curiosity)}`);
-      if (sl.story) parts.push(`Story: ${str(sl.story)}`);
-      if (em.preview_text) parts.push(`\nPreview text: ${str(em.preview_text)}`);
-      if (em.full_email) parts.push(`\n────────────────────────────────\n${str(em.full_email)}`);
-      if (em.guest_email) parts.push(`\n────────── GUEST EMAIL ──────────\n${str(em.guest_email)}`);
-      return parts.join("\n").trim();
-    }
-
-    case "ig_captions": {
-      const social = asR(assets.social);
-      const captions = asR(social.captions);
-      const parts: string[] = [];
-      if (captions.story_open) parts.push(`Option 1 — Launch Day:\n${str(captions.story_open)}`);
-      if (captions.insight_hook) parts.push(`\nOption 2 — Mid-Week Educational:\n${str(captions.insight_hook)}`);
-      if (captions.direct_address) parts.push(`\nOption 3 — Short (Stories & Reels):\n${str(captions.direct_address)}`);
-      if (social.instagram_seo_note) parts.push(`\nInstagram SEO Note:\n${str(social.instagram_seo_note)}`);
-      return parts.join("\n").trim();
-    }
-
-    case "carousel": {
-      const car = asR(assets.carousel);
-      const parts: string[] = [];
-      if (car.carousel_title) parts.push(`Carousel: ${str(car.carousel_title)}`);
-      arr(car.slides).forEach((s) => {
-        const sr = asR(s);
-        parts.push(`\nSlide ${str(sr.slide_number)} [${str(sr.type).toUpperCase()}]\n${str(sr.headline)}\n${str(sr.body)}`);
-        if (sr.design_note) parts.push(`  Design: ${str(sr.design_note)}`);
-      });
-      if (car.short_caption) parts.push(`\nCaption: ${str(car.short_caption)}`);
-      if (car.publish_timing) parts.push(`Post: ${str(car.publish_timing)}`);
-      return parts.join("\n").trim();
-    }
-
-    case "reel_hooks": {
-      const hooks = asR(assets.hooks);
-      const parts: string[] = [];
-      arr(hooks.reel_hooks).forEach((h, i) => {
-        const hr = asR(h);
-        parts.push(`${i + 1}. [${str(hr.formula)}]\n${str(hr.hook)}\nUse for: ${str(hr.use_for)}\n${str(hr.scroll_stop_mechanism)}`);
-      });
-      const ep = arr(hooks.episode_hooks);
-      if (ep.length) {
-        parts.push("\n── Episode Hooks ──");
-        ep.forEach((h, i) => {
-          const hr = asR(h);
-          parts.push(`${i + 1}. [${str(hr.type)}]\n${str(hr.hook)}`);
-        });
-      }
-      return parts.join("\n\n").trim();
-    }
-
-    case "youtube": {
-      const yt = asR(asR(assets.platforms).youtube);
-      const parts: string[] = [];
-      if (yt.above_fold) parts.push(`Above Fold:\n${str(yt.above_fold)}`);
-      if (yt.full_description) parts.push(`\n────────────────────────────────\n${str(yt.full_description)}`);
-      if (arr(yt.keywords).length) parts.push(`\nKeywords:\n${arr(yt.keywords).map(str).join(", ")}`);
-      return parts.join("\n").trim();
-    }
-
-    case "pinterest": {
-      const pin = asR(asR(assets.platforms).pinterest);
-      const parts: string[] = [];
-      if (pin.pin_title) parts.push(`Title: ${str(pin.pin_title)}`);
-      if (pin.pin_description) parts.push(`\n${str(pin.pin_description)}`);
-      if (arr(pin.keywords).length) parts.push(`\nKeywords: ${arr(pin.keywords).map(str).join(", ")}`);
-      if (arr(pin.board_suggestions).length) parts.push(`\nBoards:\n${bulletList(arr(pin.board_suggestions))}`);
-      return parts.join("\n").trim();
-    }
-
-    case "hashtags": {
-      const social = asR(assets.social);
-      const ht = asR(social.hashtags);
-      const parts: string[] = [];
-      if (ht.recommended_stack) parts.push(`📋 Copy-Paste Stack:\n${str(ht.recommended_stack)}`);
-      if (arr(ht.tier_1_broad).length)
-        parts.push(`\nTier 1 — Broad (100k–2M):\n${arr(ht.tier_1_broad).map(str).join("  ")}`);
-      if (arr(ht.tier_2_niche).length)
-        parts.push(`\nTier 2 — Niche (10k–100k):\n${arr(ht.tier_2_niche).map(str).join("  ")}`);
-      if (arr(ht.tier_3_micro).length)
-        parts.push(`\nTier 3 — Micro (1k–10k):\n${arr(ht.tier_3_micro).map(str).join("  ")}`);
-      return parts.join("\n").trim();
-    }
-
-    case "guest_share": {
-      const amp = asR(assets.amplification);
-      const gsp = asR(amp.guest_share_package);
-      if (!gsp || str(gsp.cover_note) === "" && str(gsp.feed_caption) === "") {
-        return "No guest share package — this was a solo episode.";
-      }
-      const parts: string[] = [];
-      if (gsp.cover_note) parts.push(`Cover Note:\n${str(gsp.cover_note)}`);
-      if (gsp.feed_caption) parts.push(`\nFeed Caption:\n${str(gsp.feed_caption)}`);
-      if (gsp.stories_caption) parts.push(`\nStories Caption:\n${str(gsp.stories_caption)}`);
-      if (gsp.dm_message) parts.push(`\nDM Message:\n${str(gsp.dm_message)}`);
-      const cpp = asR(amp.cross_promo_pitch);
-      if (cpp.primary) parts.push(`\nCross-Promo Pitch:\n${str(cpp.primary)}`);
-      return parts.join("\n").trim();
-    }
-
-    case "calendar": {
-      const strat = asR(assets.strategy);
-      const parts: string[] = [];
-      const ef = asR(strat.evergreen_flag);
-      if (ef.status) parts.push(`Evergreen Status: ${str(ef.status).toUpperCase()}\n${str(ef.rationale)}`);
-      const w1 = asR(strat.week_1_schedule);
-      if (Object.keys(w1).length) {
-        parts.push("\n── Week 1 Launch Schedule ──");
-        ["day_1", "day_2", "day_3", "day_4", "day_5", "day_6", "day_7"].forEach((day) => {
-          if (w1[day]) {
-            parts.push(`${day.replace("_", " ").toUpperCase()}:`);
-            arr(w1[day]).forEach((a) => parts.push(`  • ${str(a)}`));
-          }
-        });
-      }
-      const cal = asR(strat.ninety_day_calendar);
-      if (arr(cal.weeks_2_4).length) {
-        parts.push("\n── Weeks 2–4 ──");
-        arr(cal.weeks_2_4).forEach((a) => parts.push(`• ${str(a)}`));
-      }
-      if (arr(cal.month_2).length) {
-        parts.push("\n── Month 2 ──");
-        arr(cal.month_2).forEach((a) => parts.push(`• ${str(a)}`));
-      }
-      if (arr(cal.month_3).length) {
-        parts.push("\n── Month 3 ──");
-        arr(cal.month_3).forEach((a) => parts.push(`• ${str(a)}`));
-      }
-      return parts.join("\n").trim();
-    }
-
-    case "ep_score": {
-      const intel = asR(assets.intelligence);
-      const cs = asR(intel.confidence_score);
-      const parts: string[] = [];
-      if (cs.overall_signal) parts.push(`Overall: ${str(cs.overall_signal)}`);
-      if (cs.overall_summary) parts.push(str(cs.overall_summary));
-      const dims = asR(cs.dimensions);
-      if (Object.keys(dims).length) {
-        parts.push("\nDimension Breakdown:");
-        ["clarity", "searchability", "shareability", "cta_strength"].forEach((dim) => {
-          const d = asR(dims[dim]);
-          if (d.signal) {
-            parts.push(`\n${dim.charAt(0).toUpperCase() + dim.slice(1).replace("_", " ")}: ${str(d.signal)}`);
-            if (d.note) parts.push(`  ${str(d.note)}`);
-            if (d.coaching_tip && str(d.coaching_tip) !== "null")
-              parts.push(`  💡 ${str(d.coaching_tip)}`);
-          }
-        });
-      }
-      if (cs.top_priority) parts.push(`\n🎯 Top Priority:\n${str(cs.top_priority)}`);
-      return parts.join("\n").trim();
-    }
-
-    case "credibility": {
-      const intel = asR(assets.intelligence);
-      const cg = asR(intel.credibility_guard);
-      const parts: string[] = [];
-      if (cg.overall_rating) parts.push(`Rating: ${str(cg.overall_rating)}`);
-      const flags = arr(cg.flags);
-      if (flags.length) {
-        parts.push("\n⚠️ Flags:");
-        flags.forEach((f) => {
-          const fr = asR(f);
-          parts.push(`\nAsset: ${str(fr.asset)}`);
-          parts.push(`Text: "${str(fr.flagged_text)}"`);
-          parts.push(`Category: ${str(fr.category)}`);
-          parts.push(`Risk: ${str(fr.risk)}`);
-          parts.push(`✏️ Rewrite: ${str(fr.rewrite)}`);
-        });
-      } else {
-        parts.push("\n✅ No flags found");
-      }
-      if (arr(cg.clean_assets).length)
-        parts.push(`\nClean assets: ${arr(cg.clean_assets).map(str).join(", ")}`);
-      if (cg.disclaimer) parts.push(`\n${str(cg.disclaimer)}`);
-      return parts.join("\n").trim();
-    }
-
-    case "transformation": {
-      const intel = asR(assets.intelligence);
-      const ts = asR(intel.transformation_statement);
-      const parts: string[] = [];
-      if (ts.primary) parts.push(`Primary:\n${str(ts.primary)}`);
-      if (ts.alternate_a) parts.push(`\nAlternate A:\n${str(ts.alternate_a)}`);
-      if (ts.alternate_b) parts.push(`\nAlternate B:\n${str(ts.alternate_b)}`);
-      if (arr(ts.deployment_uses).length)
-        parts.push(`\nUse this for:\n${bulletList(arr(ts.deployment_uses))}`);
-      return parts.join("\n").trim();
-    }
-
-    default:
-      return "";
-  }
+function SignalPill({ signal }: { signal: string }) {
+  const s = signal.toUpperCase();
+  let cls = "bg-green-100 text-green-700";
+  if (s.includes("CAUTION") || s.includes("AMBER") || s.includes("AVERAGE"))
+    cls = "bg-amber-100 text-amber-700";
+  if (s.includes("RISK") || s.includes("LOW") || s.includes("POOR"))
+    cls = "bg-red-100 text-red-700";
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide ${cls}`}>
+      {signal}
+    </span>
+  );
 }
 
-// ─── Card config ──────────────────────────────────────────────────────────────
+// ─── Asset section ────────────────────────────────────────────────────────────
 
-const CARDS = [
-  { id: "show_notes",   title: "Show Notes",              desc: "SEO-optimised · Apple & Spotify ready" },
-  { id: "seo_titles",   title: "SEO Title Pack",           desc: "6 formulas + platform keywords" },
-  { id: "blog_skeleton",title: "Blog Skeleton",            desc: "H1 · H2s · FAQ · Schema markup" },
-  { id: "email",        title: "Email Newsletter",         desc: "Subject lines + full broadcast" },
-  { id: "ig_captions",  title: "Instagram Captions",       desc: "3 variations for every use case" },
-  { id: "carousel",     title: "Carousel Copy",            desc: "8-slide swipe file" },
-  { id: "reel_hooks",   title: "Reel Hooks",               desc: "5 reel + 5 episode hooks" },
-  { id: "youtube",      title: "YouTube Description",      desc: "Above fold + full description" },
-  { id: "pinterest",    title: "Pinterest",                desc: "Title, description & keyword stack" },
-  { id: "hashtags",     title: "Hashtag Sets",             desc: "3-tier stack · copy-paste ready" },
-  { id: "guest_share",  title: "Guest Share Kit",          desc: "Cover note · captions · DM" },
-  { id: "calendar",     title: "90-Day Calendar",          desc: "Week-by-week repurposing plan" },
-  { id: "ep_score",     title: "Episode Score",            desc: "4-dimension content analysis" },
-  { id: "credibility",  title: "Credibility Guard",        desc: "Liability & claim review" },
-  { id: "transformation",title: "Listener Transformation", desc: "Primary + alternate statements" },
-] as const;
-
-// ─── Asset card ───────────────────────────────────────────────────────────────
-
-function AssetCard({
-  title,
-  desc,
-  content,
+function AssetSection({
+  label,
+  copyText,
+  children,
 }: {
-  title: string;
-  desc: string;
-  content: string;
+  label: string;
+  copyText: string;
+  children: React.ReactNode;
 }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    if (!copyText.trim()) return;
     try {
-      await navigator.clipboard.writeText(content);
+      await navigator.clipboard.writeText(copyText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard unavailable
-    }
+    } catch {}
   };
 
-  const empty = !content.trim();
-
   return (
-    <div className="bg-card border border-border rounded-xl p-5 flex flex-col shadow-sm hover:border-muted-foreground/50 transition-colors group">
+    <div className="py-5 border-b border-border last:border-0 group">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-          {title}
+        <span
+          className="text-[11px] font-bold uppercase tracking-[0.1em]"
+          style={{ color: "#897866" }}
+        >
+          {label}
         </span>
         <button
           onClick={handleCopy}
-          disabled={empty}
           title="Copy to clipboard"
-          className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground transition-all disabled:opacity-0"
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground print:hidden"
         >
           {copied ? (
             <Check className="h-4 w-4 text-green-600" />
@@ -358,64 +100,1016 @@ function AssetCard({
           )}
         </button>
       </div>
-
-      <div className="flex-1 bg-background rounded-lg border border-border/50 p-3 overflow-y-auto max-h-[220px] min-h-[80px]">
-        {empty ? (
-          <p className="text-[12px] text-muted-foreground/50 italic">No content available</p>
-        ) : (
-          <pre className="text-[12px] text-foreground leading-relaxed whitespace-pre-wrap font-sans">
-            {content}
-          </pre>
-        )}
-      </div>
-
-      <p className="mt-2 text-[11px] text-muted-foreground">{desc}</p>
+      <div className="text-[13px] text-foreground leading-relaxed">{children}</div>
     </div>
   );
 }
+
+// ─── Tab: Publishing & SEO ────────────────────────────────────────────────────
+
+function PublishingTab({ assets }: { assets: Assets }) {
+  const seo = asR(assets.seo_titles);
+  const sn = asR(assets.show_notes);
+  const blog = asR(assets.blog_skeleton);
+  const yt = asR(asR(assets.platforms).youtube);
+  const pin = asR(asR(assets.platforms).pinterest);
+
+  // SEO
+  const seoCopy = [
+    seo.recommended_title ? `⭐ Recommended: ${str(seo.recommended_title)}` : "",
+    seo.recommended_reason ? str(seo.recommended_reason) : "",
+    arr(seo.title_variations).length
+      ? "\nAll Variations:\n" +
+        arr(seo.title_variations)
+          .map((v, i) => {
+            const vr = asR(v);
+            return `${i + 1}. [${str(vr.formula)}] ${str(vr.title)}\n   ${str(vr.why)}`;
+          })
+          .join("\n")
+      : "",
+    arr(seo.apple_keywords).length
+      ? `\nApple Podcasts: ${arr(seo.apple_keywords).map(str).join(", ")}`
+      : "",
+    arr(seo.spotify_keywords).length
+      ? `Spotify: ${arr(seo.spotify_keywords).map(str).join(", ")}`
+      : "",
+    seo.short_description ? `\nShort Description: ${str(seo.short_description)}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  // Show Notes
+  const snParts = [
+    sn.hook_sentence ? str(sn.hook_sentence) : "",
+    sn.full_summary ? "\n" + str(sn.full_summary) : "",
+    arr(sn.what_youll_learn).length
+      ? "\nWhat You'll Learn:\n" + bullets(arr(sn.what_youll_learn))
+      : "",
+    sn.pull_quote ? `\n💬 "${str(sn.pull_quote)}"` : "",
+    sn.cta_block ? "\n" + str(sn.cta_block) : "",
+  ].filter(Boolean);
+  const snCopy = snParts.join("\n").trim();
+
+  // Blog
+  const blogSections = arr(blog.sections)
+    .map((s) => {
+      const sr = asR(s);
+      const h3s = arr(sr.h3_subsections)
+        .map((h) => `    ### ${str(asR(h).h3)}`)
+        .join("\n");
+      return `## ${str(sr.h2)}\n${str(sr.writing_direction) ? "   " + str(sr.writing_direction) : ""}${h3s ? "\n" + h3s : ""}`;
+    })
+    .join("\n\n");
+  const faqs = arr(blog.faq)
+    .map((f) => {
+      const fr = asR(f);
+      return `Q: ${str(fr.question)}\nA: ${str(fr.answer)}`;
+    })
+    .join("\n\n");
+  const blogCopy = [
+    blog.h1 ? `H1: ${str(blog.h1)}` : "",
+    blog.meta_description ? `Meta: ${str(blog.meta_description)}` : "",
+    blog.target_keyword ? `Target Keyword: ${str(blog.target_keyword)}` : "",
+    blog.word_count_target ? `Word Count Target: ${str(blog.word_count_target)}` : "",
+    blogSections ? "\n" + blogSections : "",
+    faqs ? "\nFAQ:\n" + faqs : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  // YouTube
+  const ytCopy = [
+    yt.above_fold ? `Above Fold:\n${str(yt.above_fold)}` : "",
+    yt.full_description ? `\nFull Description:\n${str(yt.full_description)}` : "",
+    arr(yt.keywords).length ? `\nKeywords: ${arr(yt.keywords).map(str).join(", ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  // Pinterest
+  const pinCopy = [
+    pin.pin_title ? `Title: ${str(pin.pin_title)}` : "",
+    pin.pin_description ? "\n" + str(pin.pin_description) : "",
+    arr(pin.keywords).length ? `\nKeywords: ${arr(pin.keywords).map(str).join(", ")}` : "",
+    arr(pin.board_suggestions).length
+      ? `\nBoards:\n${bullets(arr(pin.board_suggestions))}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  // Platform keywords
+  const keywordsCopy = [
+    arr(seo.apple_keywords).length
+      ? `Apple Podcasts:\n${arr(seo.apple_keywords).map(str).join(", ")}`
+      : "",
+    arr(seo.spotify_keywords).length
+      ? `\nSpotify:\n${arr(seo.spotify_keywords).map(str).join(", ")}`
+      : "",
+    arr(yt.keywords).length
+      ? `\nYouTube:\n${arr(yt.keywords).map(str).join(", ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return (
+    <>
+      {/* SEO Title */}
+      <AssetSection label="SEO Title Pack" copyText={seoCopy}>
+        {!!seo.recommended_title && (
+          <div className="mb-3 p-3 bg-[#F0EFE9] rounded-lg border border-[#526056]/20">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#526056] mr-2">
+              Recommended
+            </span>
+            <span className="font-medium text-foreground">{str(seo.recommended_title)}</span>
+            {!!seo.recommended_reason && (
+              <p className="mt-1 text-[12px] text-muted-foreground">{str(seo.recommended_reason)}</p>
+            )}
+          </div>
+        )}
+        {arr(seo.title_variations).map((v, i) => {
+          const vr = asR(v);
+          return (
+            <div key={i} className="mb-2">
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wide text-[#897866] mr-2 bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                {str(vr.formula)}
+              </span>
+              <span className="text-[13px]">{str(vr.title)}</span>
+              {!!vr.why && <p className="text-[12px] text-muted-foreground ml-0 mt-0.5">{str(vr.why)}</p>}
+            </div>
+          );
+        })}
+        {!!seo.short_description && (
+          <p className="mt-3 text-[12px] text-muted-foreground border-t border-border pt-3">
+            <strong>Short description:</strong> {str(seo.short_description)}
+          </p>
+        )}
+      </AssetSection>
+
+      {/* Show Notes */}
+      <AssetSection label="Show Notes" copyText={snCopy}>
+        {!!sn.hook_sentence && <p className="font-medium mb-3">{str(sn.hook_sentence)}</p>}
+        {!!sn.full_summary && <p className="text-muted-foreground mb-3">{str(sn.full_summary)}</p>}
+        {arr(sn.what_youll_learn).length > 0 && (
+          <div className="mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+              What You'll Learn
+            </p>
+            <ul className="space-y-1">
+              {arr(sn.what_youll_learn).map((item, i) => (
+                <li key={i} className="flex gap-2 text-[13px]">
+                  <span className="text-[#526056] font-bold shrink-0">•</span>
+                  <span>{str(item)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {!!sn.pull_quote && (
+          <blockquote className="border-l-2 border-[#526056] pl-3 italic text-muted-foreground my-3">
+            "{str(sn.pull_quote)}"
+          </blockquote>
+        )}
+        {!!sn.cta_block && <p className="text-[13px]">{str(sn.cta_block)}</p>}
+      </AssetSection>
+
+      {/* Blog Skeleton */}
+      <AssetSection label="Blog Skeleton" copyText={blogCopy}>
+        {!!blog.h1 && <p className="font-semibold text-[15px] mb-1">{str(blog.h1)}</p>}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted-foreground mb-3">
+          {!!blog.meta_description && <span><strong>Meta:</strong> {str(blog.meta_description)}</span>}
+          {!!blog.target_keyword && <span><strong>Keyword:</strong> {str(blog.target_keyword)}</span>}
+          {!!blog.word_count_target && <span><strong>Target:</strong> {str(blog.word_count_target)} words</span>}
+        </div>
+        {arr(blog.sections).map((s, i) => {
+          const sr = asR(s);
+          return (
+            <div key={i} className="mb-3">
+              <p className="font-medium text-[13px]">H2: {str(sr.h2)}</p>
+              {!!sr.writing_direction && (
+                <p className="text-[12px] text-muted-foreground ml-3">{str(sr.writing_direction)}</p>
+              )}
+              {arr(sr.h3_subsections).map((h, j) => (
+                <p key={j} className="text-[12px] text-muted-foreground ml-6">↳ {str(asR(h).h3)}</p>
+              ))}
+            </div>
+          );
+        })}
+        {arr(blog.faq).length > 0 && (
+          <div className="mt-2 pt-2 border-t border-border/50">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-2">FAQ</p>
+            {arr(blog.faq).map((f, i) => {
+              const fr = asR(f);
+              return (
+                <div key={i} className="mb-2">
+                  <p className="font-medium text-[12px]">Q: {str(fr.question)}</p>
+                  <p className="text-[12px] text-muted-foreground">A: {str(fr.answer)}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </AssetSection>
+
+      {/* YouTube */}
+      <AssetSection label="YouTube Description" copyText={ytCopy}>
+        {!!yt.above_fold && (
+          <div className="mb-3 p-3 bg-[#F0EFE9] rounded border border-[#526056]/20">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[#526056] mb-1">Above Fold</p>
+            <pre className="whitespace-pre-wrap font-sans text-[13px]">{str(yt.above_fold)}</pre>
+          </div>
+        )}
+        {!!yt.full_description && (
+          <pre className="whitespace-pre-wrap font-sans text-[13px] text-muted-foreground">
+            {str(yt.full_description)}
+          </pre>
+        )}
+        {arr(yt.keywords).length > 0 && (
+          <p className="mt-2 text-[12px] text-muted-foreground border-t border-border pt-2">
+            <strong>Keywords:</strong> {arr(yt.keywords).map(str).join(", ")}
+          </p>
+        )}
+      </AssetSection>
+
+      {/* Pinterest */}
+      <AssetSection label="Pinterest" copyText={pinCopy}>
+        {!!pin.pin_title && <p className="font-semibold mb-2">{str(pin.pin_title)}</p>}
+        {!!pin.pin_description && <p className="text-muted-foreground mb-2">{str(pin.pin_description)}</p>}
+        {arr(pin.keywords).length > 0 && (
+          <p className="text-[12px] text-muted-foreground">
+            <strong>Keywords:</strong> {arr(pin.keywords).map(str).join(", ")}
+          </p>
+        )}
+        {arr(pin.board_suggestions).length > 0 && (
+          <div className="mt-2">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Boards</p>
+            <ul className="space-y-0.5">
+              {arr(pin.board_suggestions).map((b, i) => (
+                <li key={i} className="text-[12px] text-muted-foreground">• {str(b)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </AssetSection>
+
+      {/* Platform Keywords */}
+      <AssetSection label="Platform Keywords" copyText={keywordsCopy}>
+        {[
+          { label: "Apple Podcasts", items: arr(seo.apple_keywords) },
+          { label: "Spotify", items: arr(seo.spotify_keywords) },
+          { label: "YouTube", items: arr(yt.keywords) },
+        ].map(({ label, items }) =>
+          items.length ? (
+            <div key={label} className="mb-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">
+                {label}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {items.map(str).map((kw, i) => (
+                  <span key={i} className="text-[12px] bg-[#F0EFE9] text-[#526056] px-2 py-0.5 rounded">
+                    {kw}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null
+        )}
+      </AssetSection>
+    </>
+  );
+}
+
+// ─── Tab: Email ───────────────────────────────────────────────────────────────
+
+function EmailTab({ assets }: { assets: Assets }) {
+  const em = asR(assets.email);
+  const sl = asR(em.subject_lines);
+  const recommended = str(sl.recommended);
+
+  const subjectOptions = [
+    { key: "direct", label: "Direct" },
+    { key: "curiosity", label: "Curiosity" },
+    { key: "story", label: "Story" },
+  ];
+
+  const subjectCopy = subjectOptions
+    .filter(({ key }) => sl[key])
+    .map(({ key, label }) => `${label}${key === recommended ? " ⭐" : ""}: ${str(sl[key])}`)
+    .join("\n");
+
+  const guestEmail = str(em.guest_email);
+  const isGuest = guestEmail.length > 10;
+
+  return (
+    <>
+      <AssetSection label="Subject Lines" copyText={subjectCopy}>
+        {subjectOptions.map(({ key, label }) =>
+          sl[key] ? (
+            <div key={key} className="mb-2 flex items-start gap-2">
+              <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-[#897866] bg-[#F0EFE9] px-1.5 py-0.5 rounded mt-0.5">
+                {label}
+              </span>
+              <span className="text-[13px]">
+                {str(sl[key])}
+                {key === recommended && (
+                  <span className="ml-2 text-[10px] font-bold text-[#526056]">⭐ Recommended</span>
+                )}
+              </span>
+            </div>
+          ) : null
+        )}
+      </AssetSection>
+
+      {!!em.preview_text && (
+        <AssetSection label="Preview Text" copyText={str(em.preview_text)}>
+          <p className="text-[13px]">{str(em.preview_text)}</p>
+        </AssetSection>
+      )}
+
+      {!!em.full_email && (
+        <AssetSection label="Full Email Newsletter" copyText={str(em.full_email)}>
+          <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed">
+            {str(em.full_email)}
+          </pre>
+        </AssetSection>
+      )}
+
+      <AssetSection
+        label="Guest Thank-You Email"
+        copyText={isGuest ? guestEmail : "Not applicable for solo episodes."}
+      >
+        {isGuest ? (
+          <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed">
+            {guestEmail}
+          </pre>
+        ) : (
+          <p className="text-[13px] text-muted-foreground italic">
+            Not applicable — solo episode.
+          </p>
+        )}
+      </AssetSection>
+    </>
+  );
+}
+
+// ─── Tab: Social Media ────────────────────────────────────────────────────────
+
+function SocialTab({ assets }: { assets: Assets }) {
+  const social = asR(assets.social);
+  const captions = asR(social.captions);
+  const hashtags = asR(social.hashtags);
+  const car = asR(assets.carousel);
+  const hooks = asR(assets.hooks);
+  const amp = asR(assets.amplification);
+
+  const captionOptions = [
+    { key: "story_open", label: "Launch Day" },
+    { key: "insight_hook", label: "Mid-Week Educational" },
+    { key: "direct_address", label: "Stories & Reels" },
+  ];
+  const captionCopy = captionOptions
+    .filter(({ key }) => captions[key])
+    .map(({ key, label }) => `${label}:\n${str(captions[key])}`)
+    .join("\n\n");
+
+  const hashtagCopy = [
+    hashtags.recommended_stack ? `Copy-Paste Stack:\n${str(hashtags.recommended_stack)}` : "",
+    arr(hashtags.tier_1_broad).length
+      ? `\nTier 1 — Broad:\n${arr(hashtags.tier_1_broad).map(str).join("  ")}`
+      : "",
+    arr(hashtags.tier_2_niche).length
+      ? `\nTier 2 — Niche:\n${arr(hashtags.tier_2_niche).map(str).join("  ")}`
+      : "",
+    arr(hashtags.tier_3_micro).length
+      ? `\nTier 3 — Micro:\n${arr(hashtags.tier_3_micro).map(str).join("  ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const carouselCopy = arr(car.slides)
+    .map((s) => {
+      const sr = asR(s);
+      return `Slide ${str(sr.slide_number)} [${str(sr.type)}]\n${str(sr.headline)}\n${str(sr.body)}`;
+    })
+    .join("\n\n");
+
+  const hooksCopy = arr(hooks.reel_hooks)
+    .map((h, i) => {
+      const hr = asR(h);
+      return `${i + 1}. [${str(hr.formula)}]\n${str(hr.hook)}\nUse for: ${str(hr.use_for)}`;
+    })
+    .join("\n\n");
+
+  const engagementPrompts = arr(asR(amp.audience_engagement_prompts ?? {}).prompts ?? amp.audience_engagement_prompts);
+
+  return (
+    <>
+      <AssetSection label="Instagram Captions" copyText={captionCopy}>
+        {captionOptions.map(({ key, label }) =>
+          captions[key] ? (
+            <div key={key} className="mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[#897866] mb-1">
+                {label}
+              </p>
+              <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed">
+                {str(captions[key])}
+              </pre>
+            </div>
+          ) : null
+        )}
+        {!!social.instagram_seo_note && (
+          <p className="text-[12px] text-muted-foreground border-t border-border pt-2 mt-2 italic">
+            {str(social.instagram_seo_note)}
+          </p>
+        )}
+      </AssetSection>
+
+      <AssetSection label="Hashtag Strategy" copyText={hashtagCopy}>
+        {!!hashtags.recommended_stack && (
+          <div className="mb-4 p-3 bg-[#F0EFE9] rounded border border-[#526056]/20 font-mono text-[12px] leading-relaxed">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[#526056] mb-1 font-sans">
+              📋 Copy-Paste Stack
+            </p>
+            {str(hashtags.recommended_stack)}
+          </div>
+        )}
+        {[
+          { key: "tier_1_broad", label: "Tier 1 — Broad (100k–2M)" },
+          { key: "tier_2_niche", label: "Tier 2 — Niche (10k–100k)" },
+          { key: "tier_3_micro", label: "Tier 3 — Micro (1k–10k)" },
+        ].map(({ key, label }) =>
+          arr(hashtags[key]).length ? (
+            <div key={key} className="mb-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">
+                {label}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {arr(hashtags[key]).map(str).map((tag, i) => (
+                  <span key={i} className="text-[12px] text-muted-foreground bg-background border border-border px-2 py-0.5 rounded">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null
+        )}
+      </AssetSection>
+
+      <AssetSection label="Carousel Copy" copyText={carouselCopy}>
+        {!!car.carousel_title && (
+          <p className="font-medium mb-3">{str(car.carousel_title)}</p>
+        )}
+        {arr(car.slides).map((s) => {
+          const sr = asR(s);
+          return (
+            <div key={str(sr.slide_number)} className="mb-4 pl-3 border-l-2 border-border">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-bold text-[#526056]">
+                  Slide {str(sr.slide_number)}
+                </span>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                  {str(sr.type)}
+                </span>
+              </div>
+              <p className="font-medium text-[13px]">{str(sr.headline)}</p>
+              <p className="text-[13px] text-muted-foreground mt-0.5">{str(sr.body)}</p>
+              {!!sr.design_note && (
+                <p className="text-[11px] italic text-muted-foreground/70 mt-1">
+                  Design: {str(sr.design_note)}
+                </p>
+              )}
+            </div>
+          );
+        })}
+        {!!car.short_caption && (
+          <p className="text-[12px] text-muted-foreground border-t border-border pt-2">
+            <strong>Caption:</strong> {str(car.short_caption)}
+          </p>
+        )}
+      </AssetSection>
+
+      <AssetSection label="Reel Hooks" copyText={hooksCopy}>
+        {arr(hooks.reel_hooks).map((h, i) => {
+          const hr = asR(h);
+          return (
+            <div key={i} className="mb-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-bold text-[13px] text-[#526056]">{i + 1}.</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-[#897866] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                  {str(hr.formula)}
+                </span>
+              </div>
+              <p className="text-[13px] font-medium mb-0.5">{str(hr.hook)}</p>
+              <p className="text-[12px] text-muted-foreground">Use for: {str(hr.use_for)}</p>
+              {!!hr.scroll_stop_mechanism && (
+                <p className="text-[11px] italic text-muted-foreground/70 mt-0.5">
+                  {str(hr.scroll_stop_mechanism)}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </AssetSection>
+
+      {engagementPrompts.length > 0 && (
+        <AssetSection
+          label="Audience Engagement Prompts"
+          copyText={engagementPrompts
+            .map((p) => {
+              const pr = asR(p);
+              return `[${str(pr.type)}] ${str(pr.prompt)}`;
+            })
+            .join("\n\n")}
+        >
+          {engagementPrompts.map((p, i) => {
+            const pr = asR(p);
+            return (
+              <div key={i} className="mb-3">
+                {!!pr.type && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-[#897866] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                    {str(pr.type)}
+                  </span>
+                )}
+                <p className="text-[13px] mt-1">{str(pr.prompt ?? p)}</p>
+              </div>
+            );
+          })}
+        </AssetSection>
+      )}
+    </>
+  );
+}
+
+// ─── Tab: Amplification ───────────────────────────────────────────────────────
+
+function AmplificationTab({ assets }: { assets: Assets }) {
+  const amp = asR(assets.amplification);
+  const gsp = asR(amp.guest_share_package);
+  const isGuest = str(gsp.cover_note).length > 10;
+  const cpp = asR(amp.cross_promo_pitch);
+  const hooks = asR(assets.hooks);
+
+  const gspCopy = isGuest
+    ? [
+        gsp.cover_note ? `Cover Note:\n${str(gsp.cover_note)}` : "",
+        gsp.feed_caption ? `\nFeed Caption:\n${str(gsp.feed_caption)}` : "",
+        gsp.stories_caption ? `\nStories Caption:\n${str(gsp.stories_caption)}` : "",
+        gsp.dm_message ? `\nDM Message:\n${str(gsp.dm_message)}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "Not applicable — solo episode.";
+
+  const sponsorSuggestions = arr(amp.sponsor_suggestions);
+  const sponsorCopy = sponsorSuggestions
+    .map((s) => {
+      const sr = asR(s);
+      return `${str(sr.tier)} — ${str(sr.category)}\nWhy it fits: ${str(sr.why_it_fits)}\nAngle: ${str(sr.integration_angle)}`;
+    })
+    .join("\n\n");
+
+  const episodeHooks = arr(hooks.episode_hooks);
+
+  return (
+    <>
+      <AssetSection label="Guest Share Package" copyText={gspCopy}>
+        {isGuest ? (
+          [
+            { key: "cover_note", label: "Cover Note" },
+            { key: "feed_caption", label: "Feed Caption" },
+            { key: "stories_caption", label: "Stories Caption" },
+            { key: "dm_message", label: "DM Message" },
+          ].map(({ key, label }) =>
+            gsp[key] ? (
+              <div key={key} className="mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[#897866] mb-1">
+                  {label}
+                </p>
+                <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed">
+                  {str(gsp[key])}
+                </pre>
+              </div>
+            ) : null
+          )
+        ) : (
+          <p className="text-[13px] text-muted-foreground italic">Not applicable — solo episode.</p>
+        )}
+      </AssetSection>
+
+      {(!!cpp.primary || !!cpp.short_version) && (
+        <AssetSection
+          label="Cross-Promo Pitch Hook"
+          copyText={[
+            cpp.primary ? `Primary:\n${str(cpp.primary)}` : "",
+            cpp.short_version ? `\nShort Version:\n${str(cpp.short_version)}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n")}
+        >
+          {!!cpp.primary && (
+            <div className="mb-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Primary</p>
+              <p className="text-[13px]">{str(cpp.primary)}</p>
+            </div>
+          )}
+          {!!cpp.short_version && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Short Version</p>
+              <p className="text-[13px]">{str(cpp.short_version)}</p>
+            </div>
+          )}
+        </AssetSection>
+      )}
+
+      {sponsorSuggestions.length > 0 && (
+        <AssetSection label="Sponsor Suggestions" copyText={sponsorCopy}>
+          {sponsorSuggestions.map((s, i) => {
+            const sr = asR(s);
+            return (
+              <div key={i} className="mb-4 p-3 bg-background border border-border rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  {!!sr.tier && (
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#526056] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                      {str(sr.tier)}
+                    </span>
+                  )}
+                  <span className="font-medium text-[13px]">{str(sr.category)}</span>
+                </div>
+                {!!sr.why_it_fits && <p className="text-[12px] text-muted-foreground mb-1"><strong>Why it fits:</strong> {str(sr.why_it_fits)}</p>}
+                {!!sr.integration_angle && <p className="text-[12px] text-muted-foreground"><strong>Angle:</strong> {str(sr.integration_angle)}</p>}
+              </div>
+            );
+          })}
+        </AssetSection>
+      )}
+
+      {episodeHooks.length > 0 && (
+        <AssetSection
+          label="Episode Hook Variations"
+          copyText={episodeHooks
+            .map((h, i) => {
+              const hr = asR(h);
+              return `${i + 1}. [${str(hr.type)}]\n${str(hr.hook)}`;
+            })
+            .join("\n\n")}
+        >
+          {episodeHooks.map((h, i) => {
+            const hr = asR(h);
+            return (
+              <div key={i} className="mb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-[13px] text-[#526056]">{i + 1}.</span>
+                  {!!hr.type && (
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#897866] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                      {str(hr.type)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[13px]">{str(hr.hook)}</p>
+              </div>
+            );
+          })}
+        </AssetSection>
+      )}
+    </>
+  );
+}
+
+// ─── Tab: Strategy ────────────────────────────────────────────────────────────
+
+function StrategyTab({ assets }: { assets: Assets }) {
+  const strat = asR(assets.strategy);
+  const w1 = asR(strat.week_1_schedule);
+  const cal = asR(strat.ninety_day_calendar);
+  const ef = asR(strat.evergreen_flag);
+
+  const dayKeys = ["day_1", "day_2", "day_3", "day_4", "day_5", "day_6", "day_7"];
+  const w1Copy = dayKeys
+    .filter((d) => arr(w1[d]).length)
+    .map((d) => `${d.replace("_", " ").toUpperCase()}:\n${arr(w1[d]).map((a) => `  • ${str(a)}`).join("\n")}`)
+    .join("\n\n");
+
+  const calWindows = [
+    { key: "weeks_2_4", label: "Weeks 2–4" },
+    { key: "month_2", label: "Month 2" },
+    { key: "month_3", label: "Month 3" },
+  ];
+  const calCopy = calWindows
+    .filter(({ key }) => arr(cal[key]).length)
+    .map(({ key, label }) => `${label}:\n${bullets(arr(cal[key]))}`)
+    .join("\n\n");
+
+  const isEvergreen = str(ef.status).toLowerCase().includes("evergreen");
+
+  return (
+    <>
+      <AssetSection label="Week 1 Deployment Schedule" copyText={w1Copy}>
+        {dayKeys.map((day) =>
+          arr(w1[day]).length ? (
+            <div key={day} className="mb-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[#897866] mb-1">
+                {day.replace("_", " ")}
+              </p>
+              <ul className="space-y-1">
+                {arr(w1[day]).map((a, i) => (
+                  <li key={i} className="flex gap-2 text-[13px]">
+                    <span className="text-[#526056] font-bold shrink-0">•</span>
+                    <span>{str(a)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null
+        )}
+      </AssetSection>
+
+      <AssetSection label="90-Day Repurposing Calendar" copyText={calCopy}>
+        {calWindows.map(({ key, label }) =>
+          arr(cal[key]).length ? (
+            <div key={key} className="mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[#897866] mb-1">
+                {label}
+              </p>
+              <ul className="space-y-1">
+                {arr(cal[key]).map((a, i) => (
+                  <li key={i} className="flex gap-2 text-[13px]">
+                    <span className="text-[#526056] font-bold shrink-0">•</span>
+                    <span>{str(a)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null
+        )}
+      </AssetSection>
+
+      <AssetSection
+        label="Evergreen Flag"
+        copyText={[
+          ef.status ? `Status: ${str(ef.status)}` : "",
+          ef.rationale ? str(ef.rationale) : "",
+          ef.reshare_recommendation ? `\nReshare: ${str(ef.reshare_recommendation)}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n")}
+      >
+        {!!ef.status && (
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-[12px] font-semibold mb-3 ${
+              isEvergreen
+                ? "bg-green-100 text-green-700"
+                : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {str(ef.status)}
+          </span>
+        )}
+        {!!ef.rationale && <p className="text-[13px] mb-2">{str(ef.rationale)}</p>}
+        {!!ef.reshare_recommendation && (
+          <p className="text-[12px] text-muted-foreground">{str(ef.reshare_recommendation)}</p>
+        )}
+      </AssetSection>
+    </>
+  );
+}
+
+// ─── Tab: Intelligence ────────────────────────────────────────────────────────
+
+function IntelligenceTab({ assets }: { assets: Assets }) {
+  const intel = asR(assets.intelligence);
+  const ts = asR(intel.transformation_statement);
+  const cs = asR(intel.confidence_score);
+  const cg = asR(intel.credibility_guard);
+  const dims = asR(cs.dimensions);
+
+  const tsCopy = [
+    ts.primary ? str(ts.primary) : "",
+    ts.alternate_a ? `\nAlternate A: ${str(ts.alternate_a)}` : "",
+    ts.alternate_b ? `\nAlternate B: ${str(ts.alternate_b)}` : "",
+    arr(ts.deployment_uses).length ? `\nUse for:\n${bullets(arr(ts.deployment_uses))}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const scoreCopy = [
+    cs.overall_signal ? `Overall: ${str(cs.overall_signal)}` : "",
+    cs.overall_summary ? str(cs.overall_summary) : "",
+    ...["clarity", "searchability", "shareability", "cta_strength"].map((d) => {
+      const dim = asR(dims[d]);
+      return dim.signal
+        ? `\n${d}: ${str(dim.signal)}\n  ${str(dim.note)}`
+        : "";
+    }),
+    cs.top_priority ? `\nTop Priority: ${str(cs.top_priority)}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const flags = arr(cg.flags);
+  const credCopy = [
+    cg.overall_rating ? `Rating: ${str(cg.overall_rating)}` : "",
+    flags.length
+      ? "\nFlags:\n" +
+        flags
+          .map((f) => {
+            const fr = asR(f);
+            return `• ${str(fr.flagged_text)}\n  Rewrite: ${str(fr.rewrite)}`;
+          })
+          .join("\n\n")
+      : "\n✅ No flags found.",
+    arr(cg.clean_assets).length
+      ? `\nClean: ${arr(cg.clean_assets).map(str).join(", ")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return (
+    <>
+      <AssetSection label="Listener Transformation Statement" copyText={tsCopy}>
+        {!!ts.primary && (
+          <p
+            className="mb-4 leading-snug font-medium"
+            style={{ fontFamily: "Georgia, serif", fontSize: "18px" }}
+          >
+            {str(ts.primary)}
+          </p>
+        )}
+        {(!!ts.alternate_a || !!ts.alternate_b) && (
+          <div className="space-y-2 mb-3">
+            {!!ts.alternate_a && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-0.5">Alternate A</p>
+                <p className="text-[13px]">{str(ts.alternate_a)}</p>
+              </div>
+            )}
+            {!!ts.alternate_b && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-0.5">Alternate B</p>
+                <p className="text-[13px]">{str(ts.alternate_b)}</p>
+              </div>
+            )}
+          </div>
+        )}
+        {arr(ts.deployment_uses).length > 0 && (
+          <div className="mt-2 pt-2 border-t border-border/50">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Use for</p>
+            <ul className="space-y-0.5">
+              {arr(ts.deployment_uses).map((u, i) => (
+                <li key={i} className="text-[12px] text-muted-foreground">• {str(u)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </AssetSection>
+
+      <AssetSection label="Episode Confidence Score" copyText={scoreCopy}>
+        {!!cs.overall_signal && (
+          <div className="flex items-center gap-3 mb-3">
+            <SignalPill signal={str(cs.overall_signal)} />
+            {!!cs.overall_summary && (
+              <p className="text-[13px] text-muted-foreground">{str(cs.overall_summary)}</p>
+            )}
+          </div>
+        )}
+        <div className="space-y-2 mb-3">
+          {[
+            { key: "clarity", label: "Clarity" },
+            { key: "searchability", label: "Searchability" },
+            { key: "shareability", label: "Shareability" },
+            { key: "cta_strength", label: "CTA Strength" },
+          ].map(({ key, label }) => {
+            const dim = asR(dims[key]);
+            if (!dim.signal) return null;
+            return (
+              <div key={key} className="flex items-start gap-3 py-2 border-b border-border/50 last:border-0">
+                <span className="text-[12px] font-medium w-28 shrink-0">{label}</span>
+                <SignalPill signal={str(dim.signal)} />
+                <div className="min-w-0">
+                  {!!dim.note && <p className="text-[12px] text-muted-foreground">{str(dim.note)}</p>}
+                  {!!dim.coaching_tip && str(dim.coaching_tip) !== "null" && (
+                    <p className="text-[11px] italic text-muted-foreground/70 mt-0.5">
+                      💡 {str(dim.coaching_tip)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {!!cs.top_priority && (
+          <div className="p-3 bg-[#F0EFE9] rounded border border-[#526056]/20">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[#526056] mb-1">🎯 Top Priority</p>
+            <p className="text-[12px]">{str(cs.top_priority)}</p>
+          </div>
+        )}
+      </AssetSection>
+
+      <AssetSection label="Credibility Guard" copyText={credCopy}>
+        {!!cg.overall_rating && (
+          <div className="mb-3">
+            <SignalPill signal={str(cg.overall_rating)} />
+          </div>
+        )}
+        {flags.length === 0 ? (
+          <p className="text-[13px] text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
+            ✅ No credibility flags found
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {flags.map((f, i) => {
+              const fr = asR(f);
+              return (
+                <div key={i}>
+                  <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700 mb-0.5">
+                      ⚠️ Flagged — {str(fr.category)}
+                    </p>
+                    <p className="text-[12px] text-amber-900">"{str(fr.flagged_text)}"</p>
+                    {!!fr.risk && <p className="text-[11px] text-amber-700 mt-0.5">Risk: {str(fr.risk)}</p>}
+                  </div>
+                  {!!fr.rewrite && (
+                    <div className="bg-green-50 border border-green-200 rounded px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-green-700 mb-0.5">
+                        ✏️ Suggested Rewrite
+                      </p>
+                      <p className="text-[12px] text-green-900">{str(fr.rewrite)}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {arr(cg.clean_assets).length > 0 && (
+          <p className="mt-3 text-[12px] text-muted-foreground">
+            <strong>Clean:</strong> {arr(cg.clean_assets).map(str).join(", ")}
+          </p>
+        )}
+        {!!cg.disclaimer && (
+          <p className="mt-2 text-[11px] italic text-muted-foreground/60">{str(cg.disclaimer)}</p>
+        )}
+      </AssetSection>
+    </>
+  );
+}
+
+// ─── Tabs config ──────────────────────────────────────────────────────────────
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "publishing", label: "Publishing & SEO" },
+  { id: "email", label: "Email" },
+  { id: "social", label: "Social Media" },
+  { id: "amplification", label: "Amplification" },
+  { id: "strategy", label: "Strategy" },
+  { id: "intelligence", label: "Intelligence" },
+];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function RunDetailPage() {
   const params = useParams<{ id: string }>();
   const runId = params.id ?? "";
-
   const [runData, setRunData] = useState<RunData | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [activeTab, setActiveTab] = useState<TabId>("publishing");
+  const [copyAllDone, setCopyAllDone] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!runId) {
-      setFetchError("No run ID in URL");
-      setLoading(false);
-      return;
-    }
-
-    // 1. Check sessionStorage first (fastest — populated right after generation)
+    if (!runId) { setFetchError("No run ID in URL"); setLoading(false); return; }
     try {
       const cached = sessionStorage.getItem(`wellcast_run_${runId}`);
       if (cached) {
-        const parsed = JSON.parse(cached) as RunData;
-        setRunData(parsed);
+        setRunData(JSON.parse(cached) as RunData);
         setLoading(false);
         return;
       }
-    } catch {
-      // ignore parse errors
-    }
-
-    // 2. Fall back to API fetch
+    } catch {}
     fetch(`/api/runs/${runId}`)
       .then(async (r) => {
         if (!r.ok) throw new Error("Run not found");
-        const data = await r.json() as { id: string; episode_title: string; assets: Assets };
-        setRunData({ run_id: data.id, episode_title: data.episode_title, assets: data.assets });
+        const d = await r.json() as { id: string; episode_title: string; assets: Assets };
+        setRunData({ run_id: d.id, episode_title: d.episode_title, assets: d.assets });
       })
-      .catch((err: Error) => {
-        setFetchError(err.message ?? "Could not load this run");
-      })
+      .catch((e: Error) => setFetchError(e.message ?? "Could not load this run"))
       .finally(() => setLoading(false));
   }, [runId]);
+
+  const handlePrint = () => window.print();
+
+  const handleCopyAll = async () => {
+    if (!contentRef.current) return;
+    const text = contentRef.current.innerText ?? "";
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyAllDone(true);
+      setTimeout(() => setCopyAllDone(false), 2500);
+    } catch {}
+  };
 
   if (loading) {
     return (
@@ -433,52 +1127,146 @@ export default function RunDetailPage() {
         <div className="max-w-md mx-auto mt-16 text-center">
           <p className="text-foreground font-medium mb-2">Couldn't load this run</p>
           <p className="text-[13px] text-muted-foreground mb-4">{fetchError}</p>
-          <Link href="/new-run" className="text-[13px] text-accent hover:underline">
-            ← Start a new run
-          </Link>
+          <Link href="/new-run" className="text-[13px] text-accent hover:underline">← Start a new run</Link>
         </div>
       </DashboardLayout>
     );
   }
 
+  const isIntelligence = activeTab === "intelligence";
+
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="mb-8">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center text-[13px] text-muted-foreground hover:text-foreground mb-4 transition-colors"
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #print-root, #print-root * { visibility: visible; }
+          #print-root { position: absolute; inset: 0; }
+          .print-hidden { display: none !important; }
+          .tab-content { display: block !important; }
+          .print-category-heading {
+            font-size: 18px;
+            font-weight: 700;
+            color: #526056;
+            margin: 24px 0 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #ddd;
+            page-break-before: auto;
+          }
+          pre, p { font-size: 11px !important; }
+        }
+        @media screen {
+          .tab-content { display: none; }
+          .tab-content.active { display: block; }
+        }
+      `}</style>
+
+      {/* Full-bleed split layout — break out of DashboardLayout's max-w/padding */}
+      <div
+        id="print-root"
+        className="flex -mx-6 md:-mx-8 -my-6 md:-my-8 min-h-[calc(100vh-60px)]"
+      >
+        {/* ── Sidebar ── */}
+        <aside
+          className="w-[200px] shrink-0 flex flex-col border-r border-border sticky top-0 h-[calc(100vh-60px)] overflow-y-auto print-hidden"
+          style={{ background: "#FAFAF8" }}
         >
-          <ArrowLeft className="mr-1 h-3 w-3" /> Back to Dashboard
-        </Link>
-
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-[20px] font-medium text-foreground leading-tight">
-                {runData.episode_title}
-              </h1>
-              <span className="flex items-center text-[11px] font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full border border-green-200 shrink-0">
-                <CheckCircle2 className="h-3 w-3 mr-1" /> Complete
-              </span>
-            </div>
-            <p className="text-[13px] text-muted-foreground">
-              {CARDS.length} assets generated · {runId.slice(0, 8)}
+          {/* Episode title + status */}
+          <div className="px-4 pt-5 pb-4 border-b border-border">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground mb-3 transition-colors"
+            >
+              <ArrowLeft className="h-3 w-3" /> Dashboard
+            </Link>
+            <p className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2 mb-2">
+              {runData.episode_title}
             </p>
+            <span className="inline-flex items-center text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full border border-green-200">
+              <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> Complete
+            </span>
           </div>
-        </div>
-      </div>
 
-      {/* Asset grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {CARDS.map((card) => (
-          <AssetCard
-            key={card.id}
-            title={card.title}
-            desc={card.desc}
-            content={getContent(card.id, runData.assets)}
-          />
-        ))}
+          {/* Tab nav */}
+          <nav className="flex-1 px-2 py-3 space-y-0.5">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="w-full text-left px-3 py-2 rounded-md text-[13px] font-medium transition-colors"
+                  style={{
+                    background: isActive ? "#526056" : "transparent",
+                    color: isActive ? "#ffffff" : "#897866",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "#F0EFE9";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Actions */}
+          <div className="px-3 pb-4 pt-2 border-t border-border space-y-2">
+            <button
+              onClick={handlePrint}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[12px] font-medium border transition-colors"
+              style={{ borderColor: "#526056", color: "#526056" }}
+            >
+              <Download className="h-3.5 w-3.5" /> Download PDF
+            </button>
+            <button
+              onClick={handleCopyAll}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[12px] font-medium transition-colors"
+              style={{ background: "#F0EFE9", color: "#526056" }}
+            >
+              {copyAllDone ? (
+                <><Check className="h-3.5 w-3.5" /> Copied!</>
+              ) : (
+                <><ClipboardList className="h-3.5 w-3.5" /> Copy all assets</>
+              )}
+            </button>
+          </div>
+        </aside>
+
+        {/* ── Main content ── */}
+        <main
+          className="flex-1 min-w-0 overflow-y-auto"
+          style={{ background: isIntelligence ? "#F0EFE9" : undefined }}
+        >
+          {/* Print header */}
+          <div className="hidden print:block px-8 pt-8 pb-4 border-b border-border mb-4">
+            <p className="text-[20px] font-bold" style={{ color: "#526056" }}>Wellcast Studio</p>
+            <p className="text-[15px] font-medium mt-1">{runData.episode_title}</p>
+            <p className="text-[12px] text-muted-foreground">Generated {new Date().toLocaleDateString()}</p>
+          </div>
+
+          {/* Tab content sections — all rendered, CSS toggles screen visibility */}
+          {TABS.map((tab) => (
+            <div
+              key={tab.id}
+              ref={tab.id === activeTab ? contentRef : undefined}
+              className={`tab-content px-6 py-6 md:px-8${activeTab === tab.id ? " active" : ""}`}
+            >
+              <p className="print-category-heading hidden print:block">{tab.label}</p>
+
+              {tab.id === "publishing" && <PublishingTab assets={runData.assets} />}
+              {tab.id === "email" && <EmailTab assets={runData.assets} />}
+              {tab.id === "social" && <SocialTab assets={runData.assets} />}
+              {tab.id === "amplification" && <AmplificationTab assets={runData.assets} />}
+              {tab.id === "strategy" && <StrategyTab assets={runData.assets} />}
+              {tab.id === "intelligence" && <IntelligenceTab assets={runData.assets} />}
+            </div>
+          ))}
+        </main>
       </div>
     </DashboardLayout>
   );

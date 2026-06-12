@@ -1,0 +1,123 @@
+Really good instinct to pause here — this is a product design decision that affects how useful the tool feels every single day. Let me give you my honest take.
+
+The problem with the card grid:
+
+26 cards on one screen is overwhelming. Users will scroll, feel paralyzed by the volume, and not know where to start. The cards also treat a show notes draft the same as a hashtag string — very different assets that deserve very different amounts of attention.
+The better approach — tabbed category navigation:
+Think of how Notion or Linear handle dense information. A left sidebar or top tab bar with the six categories. Click a category, see only those assets. Clean, focused, one category at a time.
+The user flow becomes:
+
+Generation completes → land on Publishing & SEO tab automatically
+Work through that category — copy show notes, copy SEO title, copy blog skeleton
+Click Email tab → copy newsletter and subject lines
+Click Social tab → copy captions, carousel, hooks
+And so on through all six categories
+
+This mirrors how they actually work — they don't do everything at once, they work platform by platform.
+
+On downloading — yes, absolutely.
+Two download options worth building:
+Option A — Full PDF export
+
+One beautifully formatted PDF with all 26 assets organized by category. Clean typography, your brand on it. They save it, share it with a VA, or print it. This is the highest-value download option.
+Option B — Category-specific copy
+
+A "Copy all" button within each category tab that copies everything in that section as formatted text. Fast, practical, works for people who just want to paste into Notion or a Google Doc.
+Option C — Both
+
+Full PDF download button in the header plus copy-all per category. This is what I'd recommend.
+
+My recommendation for the output screen:
+Tell Replit's agent to build this instead of the card grid:
+
+Redesign the output screen completely. Replace the card grid with a tabbed category layout:
+Left sidebar navigation (fixed, 200px wide):
+
+Episode title at top (truncated to 2 lines)
+Status badge: Complete
+Six category tabs as clickable nav items:
+
+Publishing & SEO
+Email
+Social Media
+Amplification
+Strategy
+Intelligence
+
+
+Active tab: forest background (#526056), white text
+Inactive: transparent, #897866 text
+Hover: #F0EFE9 background
+Below the nav tabs, a divider, then:
+
+"Download PDF" button — full width, outlined forest style
+"Copy all assets" button — full width, subtle #F0EFE9 background
+
+
+
+Main content area (fills remaining width, scrollable):
+
+Shows only the assets for the active category. Default active tab on load: Publishing & SEO.
+Each asset within a category is displayed as a full-width section with:
+
+Asset name as a small label (11px, uppercase, #897866, letter-spacing 0.1em)
+Full content displayed cleanly — not truncated, fully readable
+Copy button (clipboard icon, top right of each asset section) — copies content to clipboard, shows "Copied!" for 2 seconds
+A thin divider between assets within the same category
+
+Asset content per category:
+Publishing & SEO tab:
+
+Recommended SEO Title — show prominently with "Recommended" badge, then 6 variations below labeled by formula
+Show Notes — full summary, what you'll learn bullets, pull quote, CTA block
+Blog Skeleton — H1, meta description, target keyword, section outline with H2/H3 hierarchy, FAQ questions, schema markup note
+YouTube Description — above fold text highlighted separately, then full description
+Pinterest — pin title, pin description, keyword list
+Platform Keywords — Apple, Spotify, YouTube keyword sets each labeled separately
+
+Email tab:
+
+Subject Lines — three options labeled Direct, Curiosity, Story with recommended flagged
+Preview Text
+Full Email Newsletter — complete draft, readable as an email
+Guest Thank-You Email — only if episode_type is guest_interview, otherwise show "Not applicable for solo episodes"
+
+Social Media tab:
+
+Instagram Captions — three variations labeled Launch Day, Mid-Week, Stories/Reels
+Hashtag Strategy — recommended stack as copy-paste block, then three tiers labeled and listed separately
+Carousel Copy — slide by slide, numbered, headline + body for each slide + design note in gray italic
+Reel Hooks — numbered 1-5, formula type as small badge, hook text, use case in gray
+Audience Engagement Prompts — three questions labeled by type
+
+Amplification tab:
+
+Guest Share Package — cover note, feed caption, stories caption, DM message each labeled (show "Not applicable" if solo)
+Cross-Promo Pitch Hook — primary and short version
+Sponsor Suggestions — Tier 1, 2, 3 each as labeled sections with category, why it fits, integration angle. Avoid list at bottom in amber/warning style
+Episode Hook Variations — 5 hooks labeled by type
+
+Strategy tab:
+
+Week 1 Deployment Schedule — day by day, each day as a labeled section with bullet actions
+90-Day Repurposing Calendar — four windows (Week 1, Weeks 2-4, Month 2, Month 3) each as labeled sections
+Evergreen Flag — status shown as a colored badge (green for evergreen, amber for time-sensitive), rationale, reshare recommendation
+
+Intelligence tab — visually distinct, background #F0EFE9 throughout:
+
+Listener Transformation Statement — primary statement large and prominent (Georgia serif, 20px), two alternates below smaller, deployment uses as a small list
+Episode Confidence Score — overall signal as a large badge, overall summary, then four dimensions each as a row: dimension name, signal pill (green/amber/red), observation, coaching tip in italic
+Credibility Guard — overall rating badge, flagged items each showing flagged text in amber box with rewrite below in green box, clean assets list at bottom
+
+PDF Export:
+
+When "Download PDF" is clicked, generate a clean PDF of all assets using the browser's print functionality — window.print() with a print-specific CSS that formats everything cleanly on paper. Add a @media print stylesheet that:
+
+Shows all categories expanded (no tabs in print view)
+Adds "Wellcast Studio" header on first page with episode title and generation date
+Adds category headings as page section breaks
+Uses clean black text on white background
+Hides navigation, buttons, and UI chrome
+Formats font sizes appropriately for print (12px body, 14px headings)
+
+This gives users a professional PDF they can save, share with a VA, or reference offline without building a complex PDF generation library.
