@@ -1,0 +1,47 @@
+This looks incredible for a first build — the layout, typography, and brand colors are all landing correctly. The input bar as hero is exactly right.
+Now let's fix the three things. Go into Replit's agent and paste this:
+
+Make these three specific changes:
+1. Update free trial copy
+
+Find every instance of "14 days" and change it to "7 days". This includes the header button and anywhere else it appears on the page.
+2. Fix the asset pills scrollbar
+
+The asset preview pills below the generate button are overflowing horizontally causing a scrollbar. Fix this by wrapping them instead of scrolling. Change the pills container from a single horizontal row to a flex-wrap layout so pills wrap to multiple lines naturally. Add padding-bottom 8px between rows. Max-width should match the input container at 720px, centered.
+3. Add a pricing section
+
+Add a pricing section below the "How it works" section with this content:
+Section eyebrow: "Simple pricing"
+
+Section headline: "Start free. Scale as you grow."
+
+Section subheadline: "No contracts. Cancel anytime."
+Three pricing cards in a row (centered, max-width 900px, gap 20px):
+Card 1 — Starter
+
+Label: "Starter"
+Price: "$37" with "/month"
+Description: "Perfect for podcasters publishing consistently"
+Features list: 4 episode runs per month · All 26 assets per run · SEO optimization · 90-day repurposing calendar · Email support
+CTA button: "Start 7-day free trial" — outlined style, forest color border and text
+
+Card 2 — Pro (featured — make this card stand out with dark #363633 background and white text)
+
+Badge above card: "Most popular" in forest color
+Label: "Pro"
+Price: "$57" with "/month"
+Description: "For podcasters serious about growth"
+Features list: Unlimited episode runs · All 26 assets per run · SEO optimization · 90-day repurposing calendar · Episode Confidence Score · Clinical Credibility Guard · Priority support
+CTA button: "Start 7-day free trial" — filled forest (#526056) background, white text
+
+Card 3 — Founding Member
+
+Badge: "50 spots only" in warm color (#897866)
+Label: "Founding Member"
+Price: "$37" with "/month — locked forever"
+Description: "Pro features at Starter pricing — for founding members only"
+Features list: Everything in Pro · Price locked for life · Founding member badge · Early access to all new features
+CTA button: "Join the waitlist" — outlined dark style
+Small note below button: "Available to waitlist members before public launch"
+
+All three cards: white background (except Pro card), border #DADCD9, border-radius 12px, padding 32px. Price in large Georgia serif font. Features as a list with a small checkmark or dot in forest color before each item.

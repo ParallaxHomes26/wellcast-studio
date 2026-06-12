@@ -170,7 +170,7 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-center">See your results — start free</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
-              14 days free, no credit card required
+              7 days free, no credit card required
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">

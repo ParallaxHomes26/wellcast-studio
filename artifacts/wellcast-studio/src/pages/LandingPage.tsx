@@ -21,7 +21,7 @@ export default function LandingPage() {
             Sign in
           </Link>
           <Link href="/signup" className="bg-accent text-white rounded-full px-5 py-2 text-[13px] font-medium hover:bg-accent/90 transition-colors shadow-sm">
-            Start free — 14 days
+            Start free — 7 days
           </Link>
         </div>
       </header>
@@ -46,16 +46,12 @@ export default function LandingPage() {
         </section>
 
         {/* Asset Preview Strip */}
-        <section className="mt-8 overflow-hidden w-full relative">
-          {/* Subtle fade edges for the scrolling strip */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10" />
-          
-          <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-6 scrollbar-hide no-scrollbar whitespace-nowrap">
+        <section className="mt-8 px-6">
+          <div className="max-w-[720px] mx-auto flex flex-wrap gap-2 pb-2">
             {PREVIEW_ASSETS.map((asset, i) => (
-              <div 
-                key={i} 
-                className="inline-flex items-center justify-center text-[11px] font-medium px-3 py-1 rounded-full bg-card border border-border text-accent whitespace-nowrap shadow-sm"
+              <div
+                key={i}
+                className="inline-flex items-center justify-center text-[11px] font-medium px-3 py-1 rounded-full bg-card border border-border text-accent shadow-sm"
               >
                 {asset}
               </div>
@@ -114,6 +110,116 @@ export default function LandingPage() {
               </div>
             </div>
 
+          </div>
+        </section>
+        {/* Pricing */}
+        <section className="mt-24 px-6">
+          <div className="max-w-[900px] mx-auto">
+            <div className="text-center mb-12">
+              <span className="uppercase tracking-[0.1em] text-[11px] font-semibold text-accent mb-4 block">
+                Simple pricing
+              </span>
+              <h2 className="font-serif font-light text-[36px] text-foreground mb-3">
+                Start free. Scale as you grow.
+              </h2>
+              <p className="text-[15px] text-muted-foreground">No contracts. Cancel anytime.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Starter */}
+              <div className="bg-card border border-border rounded-xl p-8 flex flex-col">
+                <div className="mb-6">
+                  <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">Starter</p>
+                  <div className="flex items-baseline gap-1 mb-3">
+                    <span className="font-serif font-light text-[44px] text-foreground leading-none">$37</span>
+                    <span className="text-[14px] text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-[14px] text-muted-foreground leading-relaxed">Perfect for podcasters publishing consistently</p>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {["4 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Email support"].map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-[14px] text-foreground">
+                      <span className="text-accent mt-0.5 shrink-0">·</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  data-testid="button-starter-trial"
+                  className="w-full py-3 rounded-lg border border-accent text-accent text-[14px] font-medium hover:bg-accent/5 transition-colors"
+                >
+                  Start 7-day free trial
+                </button>
+              </div>
+
+              {/* Pro — featured */}
+              <div className="relative flex flex-col">
+                <div className="absolute -top-4 left-0 right-0 flex justify-center">
+                  <span className="bg-accent text-white text-[11px] font-semibold uppercase tracking-[0.08em] px-4 py-1 rounded-full">
+                    Most popular
+                  </span>
+                </div>
+                <div className="bg-[#363633] border border-[#363633] rounded-xl p-8 flex flex-col flex-1">
+                  <div className="mb-6">
+                    <p className="text-[13px] font-medium text-white/60 uppercase tracking-[0.08em] mb-4">Pro</p>
+                    <div className="flex items-baseline gap-1 mb-3">
+                      <span className="font-serif font-light text-[44px] text-white leading-none">$57</span>
+                      <span className="text-[14px] text-white/60">/month</span>
+                    </div>
+                    <p className="text-[14px] text-white/70 leading-relaxed">For podcasters serious about growth</p>
+                  </div>
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {["Unlimited episode runs", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Episode Confidence Score", "Clinical Credibility Guard", "Priority support"].map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-[14px] text-white/90">
+                        <span className="text-accent mt-0.5 shrink-0" style={{ color: "#8aab8e" }}>·</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    data-testid="button-pro-trial"
+                    className="w-full py-3 rounded-lg bg-accent text-white text-[14px] font-medium hover:bg-accent/90 transition-colors"
+                  >
+                    Start 7-day free trial
+                  </button>
+                </div>
+              </div>
+
+              {/* Founding Member */}
+              <div className="bg-card border border-border rounded-xl p-8 flex flex-col">
+                <div className="mb-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#897866]">50 spots only</span>
+                </div>
+                <div className="mb-6 mt-2">
+                  <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">Founding Member</p>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="font-serif font-light text-[44px] text-foreground leading-none">$37</span>
+                    <span className="text-[14px] text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-[12px] text-muted-foreground mb-3">locked forever</p>
+                  <p className="text-[14px] text-muted-foreground leading-relaxed">Pro features at Starter pricing — for founding members only</p>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {["Everything in Pro", "Price locked for life", "Founding member badge", "Early access to all new features"].map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-[14px] text-foreground">
+                      <span className="text-accent mt-0.5 shrink-0">·</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="space-y-2">
+                  <button
+                    data-testid="button-founding-waitlist"
+                    className="w-full py-3 rounded-lg border border-foreground text-foreground text-[14px] font-medium hover:bg-foreground/5 transition-colors"
+                  >
+                    Join the waitlist
+                  </button>
+                  <p className="text-[12px] text-muted-foreground text-center">
+                    Available to waitlist members before public launch
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </main>
