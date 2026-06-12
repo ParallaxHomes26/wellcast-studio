@@ -1,0 +1,126 @@
+Build a Next.js 14 SaaS application called Wellcast Studio. Use the App Router, Tailwind CSS, and TypeScript.
+Install these dependencies:
+
+@supabase/supabase-js
+@supabase/auth-helpers-nextjs
+@stripe/stripe-js
+stripe
+lucide-react
+
+Set up this file structure:
+src/
+  app/
+    (auth)/
+      login/page.tsx
+      signup/page.tsx
+    (dashboard)/
+      dashboard/page.tsx
+      new-run/page.tsx
+      run/[id]/page.tsx
+      account/page.tsx
+    layout.tsx
+    page.tsx
+  components/
+    ui/
+    dashboard/
+    input/
+    output/
+  lib/
+    supabase.ts
+    stripe.ts
+    anthropic.ts
+  types/
+    index.ts
+Environment variables to reference (already set in Replit Secrets):
+
+ANTHROPIC_API_KEY
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY
+
+Design system — apply these CSS variables to globals.css:
+css--color-forest: #526056;
+--color-dark: #363633;
+--color-warm: #897866;
+--color-linen: #F3F2EE;
+--color-sage: #CBD0CA;
+--color-border: #DADCD9;
+Set the body background to #F3F2EE and default font to Inter.
+Build these four foundational files:
+
+src/lib/supabase.ts — Supabase client initialization using environment variables
+src/lib/stripe.ts — Stripe client initialization using environment variables
+src/lib/anthropic.ts — a single async function called generateAssets that accepts an episode brief object and a CTA string, makes a POST request to /api/generate, and returns the response
+src/types/index.ts — TypeScript interfaces for:
+
+EpisodeBrief (show_name, episode_type, host_name, guest_name, guest_credentials, health_niche, secondary_niches, core_topic, key_points, target_listener, tone, quotable_moments, actionable_takeaways, sensitive_topics, trust_signals, episode_length_signal)
+EpisodeRun (id, user_id, created_at, episode_title, health_niche, episode_type, assets, confidence_score, credibility_flags, transformation_statement)
+SubscriptionTier (free_trial, starter, pro, founding_member)
+
+
+
+Build the dashboard shell (src/app/(dashboard)/dashboard/page.tsx):
+
+Header with Wellcast Studio logo left, user email and sign out button right
+A "New episode run" CTA button that links to /new-run
+An empty state for episode history: "No runs yet. Start your first episode run."
+Subscription status pill showing current plan
+Clean sidebar navigation with: Dashboard, New Run, Episode History, Account
+Background linen (#F3F2EE), cards in white with border #DADCD9
+
+Build the landing page (src/app/page.tsx) as a product-led experience — the product is visible and usable immediately on landing. No traditional marketing page.
+Header (minimal, sticky):
+
+Left: "Wellcast Studio" wordmark in #363633, font-weight 500
+Right: "Sign in" text link in #897866 + "Start free — 14 days" pill button in #526056 white text
+White background, bottom border #DADCD9, padding 16px 24px
+
+Hero section (centered, padding-top 80px):
+
+Small eyebrow label in #526056, uppercase, letter-spacing: "Built for health and wellness podcasters"
+Large headline in Georgia serif font-weight 300, 52px, color #363633: "Every asset. One episode. Two minutes."
+Subheadline in #897866, 17px, max-width 560px, centered: "Paste your transcript, enter your episode details, or drop a URL — and walk away with 26 content assets ready to publish, schedule, and share."
+
+Input bar (the hero — center of the page, max-width 720px, margin auto, margin-top 48px):
+
+A large rounded container (border-radius 16px, border 1px solid #DADCD9, background white, box-shadow 0 4px 24px rgba(0,0,0,0.06)):
+Three tabs across the top of the container:
+
+"Paste transcript" (active by default — forest underline border)
+"Enter details"
+"Episode URL"
+
+Tab bar has bottom border #DADCD9, tabs are 13px font, padding 14px 20px
+
+Under active tab "Paste transcript": a large textarea (min-height 180px, no border, padding 20px, font-size 14px, line-height 1.7, resize vertical) with placeholder: "Paste your full episode transcript here — raw text, timestamps and speaker labels included. We handle the rest."
+Under "Enter details" tab: a form with fields for Episode topic, Guest name (optional), Guest credentials (optional), Key points (textarea), Memorable quote, Ideal listener, and a niche chip selector with options: Women's health, Hormones, Fertility, Pregnancy, Birth, Motherhood, Mental health, Fitness, Nutrition, Integrative wellness
+Under "Episode URL" tab: a URL input with a "Fetch episode →" button in #363633
+Below the tab panel (all tabs share this): a single-line input with label "Your CTA for this episode (optional)" placeholder "e.g. Book a discovery call at yoursite.com — woven into every asset automatically"
+A full-width "Generate 26 assets →" button (padding 16px, background #363633, color white, border-radius 10px, font-size 15px, font-weight 500, margin-top 12px). On click if user is not signed in: show a centered modal with headline "See your results — start free", subheadline "14 days free, no credit card required", email input, and "Create my account →" button in #526056. Include a close button.
+Asset preview strip (margin-top 32px, below the input container):
+
+A single line of horizontally scrolling pills showing: Show notes · SEO titles · Blog skeleton · Email newsletter · Instagram captions · Carousel copy · Reel hooks · YouTube description · Pinterest · 3-tier hashtags · Guest share kit · 90-day calendar · Episode score · Credibility guard · Listener transformation · +11 more
+
+Pills are small (font-size 11px, padding 4px 12px, border-radius 20px, background white, border #DADCD9, color #526056)
+Stats row (margin-top 48px, centered, three items with dividers):
+
+"26 assets generated" / "5–7 hours saved per episode" / "SEO built into every asset"
+
+Font-size 13px, color #897866, uppercase, letter-spacing 0.08em
+How it works section (margin-top 80px, max-width 600px, centered):
+
+Eyebrow: "How it works"
+
+Three steps in a clean vertical or horizontal layout:
+
+"Bring your episode" — Paste your transcript, fill in your details, or drop a URL. Any format works.
+"Hit generate" — 26 assets build in parallel in under 2 minutes. SEO, social, email, strategy — all of it.
+"Publish and grow" — Copy, deploy, and follow your 90-day repurposing calendar. Your episode works for months, not hours.
+
+Footer (margin-top 80px, padding 32px, border-top #DADCD9):
+
+"Wellcast Studio · Built by Aligned Marketing Co." centered, font-size 12px, color #CBD0CA
+Overall: background #F3F2EE throughout except white cards and input container. No hero image. The input bar is the hero. Clean, minimal, elevated. Feels like a professional tool, not a marketing site.
+Do not build authentication logic, Supabase queries, or API routes yet — just the UI shells, file structure, and foundational lib files. Make sure the app compiles and runs without errors.

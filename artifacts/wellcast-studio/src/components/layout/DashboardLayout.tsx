@@ -1,0 +1,81 @@
+import { ReactNode } from "react";
+import { Link, useLocation } from "wouter";
+import { LayoutDashboard, Plus, BookOpen, User, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [location, setLocation] = useLocation();
+
+  const handleSignout = () => {
+    setLocation("/");
+  };
+
+  const navItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+    { icon: Plus, label: "New Run", href: "/new-run" },
+    { icon: BookOpen, label: "Episode History", href: "/dashboard#history" },
+    { icon: User, label: "Account", href: "/account" },
+  ];
+
+  return (
+    <div className="min-h-screen flex bg-background">
+      {/* Sidebar */}
+      <aside className="w-[220px] bg-sidebar border-r border-sidebar-border hidden md:flex flex-col shrink-0">
+        <div className="h-[60px] flex items-center px-6 border-b border-sidebar-border">
+          <Link href="/dashboard" className="font-medium text-[16px] text-sidebar-foreground tracking-tight">
+            Wellcast Studio
+          </Link>
+        </div>
+        
+        <nav className="flex-1 py-6 px-3 space-y-1">
+          {navItems.map((item) => {
+            const isActive = location === item.href || (location.startsWith("/run/") && item.href.includes("history"));
+            const Icon = item.icon;
+            
+            return (
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-[14px] font-medium transition-colors
+                  ${isActive 
+                    ? "bg-sidebar-primary/10 text-sidebar-primary" 
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/5"}`}
+              >
+                <Icon size={18} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="h-[60px] bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
+          <div className="md:hidden font-medium text-[16px] text-foreground tracking-tight">
+            Wellcast Studio
+          </div>
+          <div className="hidden md:block" /> {/* Spacer */}
+          
+          <div className="flex items-center gap-4">
+            <span className="text-[13px] text-muted-foreground font-medium hidden sm:inline-block">jane@example.com</span>
+            <Button variant="ghost" size="sm" onClick={handleSignout} className="text-muted-foreground hover:text-foreground h-8 text-[13px]">
+              <LogOut size={16} className="mr-2" />
+              Sign out
+            </Button>
+          </div>
+        </header>
+        
+        <div className="flex-1 overflow-auto p-6 md:p-8">
+          <div className="max-w-5xl mx-auto">
+            {children}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
