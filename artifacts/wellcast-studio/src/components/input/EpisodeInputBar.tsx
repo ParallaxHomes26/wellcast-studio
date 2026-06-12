@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
+type InputMethod = "transcript" | "details" | "url";
+
 interface EpisodeInputBarProps {
   requireAuth?: boolean;
+  onGenerate?: (
+    inputMethod: InputMethod,
+    inputData: Record<string, unknown>,
+    cta: string
+  ) => void;
 }
 
 const HEALTH_NICHES = [
@@ -23,23 +30,60 @@ const HEALTH_NICHES = [
   "Spiritual Wellness", "General Wellness",
 ];
 
-export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBarProps) {
-  const [activeTab, setActiveTab] = useState<"transcript" | "details" | "url">("transcript");
+export default function EpisodeInputBar({ requireAuth = false, onGenerate }: EpisodeInputBarProps) {
+  const [activeTab, setActiveTab] = useState<InputMethod>("transcript");
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Transcript tab
+  const [transcript, setTranscript] = useState("");
+
+  // Details tab
+  const [topic, setTopic] = useState("");
+  const [quote, setQuote] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestCredentials, setGuestCredentials] = useState("");
+  const [keyPoints, setKeyPoints] = useState("");
+  const [idealListener, setIdealListener] = useState("");
+
+  // URL tab
+  const [url, setUrl] = useState("");
+
+  // Shared
+  const [cta, setCta] = useState("");
+
+  const ctaRef = useRef<HTMLInputElement>(null);
 
   const handleGenerate = () => {
     if (requireAuth) {
       setShowAuthModal(true);
-    } else {
-      // In a real app, this would submit the form and redirect
-      console.log("Generating assets...");
+      return;
+    }
+
+    if (!onGenerate) return;
+
+    const ctaValue = ctaRef.current?.value ?? cta;
+
+    if (activeTab === "transcript") {
+      onGenerate("transcript", { transcript }, ctaValue);
+    } else if (activeTab === "details") {
+      onGenerate("details", {
+        topic,
+        quote,
+        guest_name: guestName,
+        guest_credentials: guestCredentials,
+        key_points: keyPoints,
+        ideal_listener: idealListener,
+        health_niches: selectedNiches,
+      }, ctaValue);
+    } else if (activeTab === "url") {
+      onGenerate("url", { url }, ctaValue);
     }
   };
 
   const toggleNiche = (niche: string) => {
-    setSelectedNiches(prev => 
-      prev.includes(niche) 
+    setSelectedNiches(prev =>
+      prev.includes(niche)
         ? prev.filter(n => n !== niche)
         : [...prev, niche]
     );
@@ -73,6 +117,8 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
           {activeTab === "transcript" && (
             <Textarea
               data-testid="input-transcript"
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
               className="min-h-[180px] border-0 p-0 text-[14px] leading-[1.7] focus-visible:ring-0 resize-y shadow-none bg-transparent"
               placeholder="Paste your full episode transcript here — raw text, timestamps and speaker labels included. We handle the rest."
             />
@@ -83,36 +129,68 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="topic">Episode topic</Label>
-                  <Input id="topic" data-testid="input-topic" />
+                  <Input
+                    id="topic"
+                    data-testid="input-topic"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="quote">Memorable quote</Label>
-                  <Input id="quote" data-testid="input-quote" />
+                  <Input
+                    id="quote"
+                    data-testid="input-quote"
+                    value={quote}
+                    onChange={(e) => setQuote(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="guest-name">Guest name (optional)</Label>
-                  <Input id="guest-name" data-testid="input-guest-name" />
+                  <Input
+                    id="guest-name"
+                    data-testid="input-guest-name"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="guest-credentials">Guest credentials (optional)</Label>
-                  <Input id="guest-credentials" data-testid="input-guest-credentials" />
+                  <Input
+                    id="guest-credentials"
+                    data-testid="input-guest-credentials"
+                    value={guestCredentials}
+                    onChange={(e) => setGuestCredentials(e.target.value)}
+                  />
                 </div>
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="key-points">Key points</Label>
-                <Textarea id="key-points" data-testid="input-key-points" rows={3} />
+                <Textarea
+                  id="key-points"
+                  data-testid="input-key-points"
+                  rows={3}
+                  value={keyPoints}
+                  onChange={(e) => setKeyPoints(e.target.value)}
+                />
               </div>
-              
+
               <div className="space-y-1.5">
                 <Label htmlFor="ideal-listener">Ideal listener</Label>
-                <Input id="ideal-listener" data-testid="input-ideal-listener" />
+                <Input
+                  id="ideal-listener"
+                  data-testid="input-ideal-listener"
+                  value={idealListener}
+                  onChange={(e) => setIdealListener(e.target.value)}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Health niche</Label>
                 <div className="relative">
-                  <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto pr-1 pb-6"
+                  <div
+                    className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto pr-1 pb-6"
                     style={{ scrollbarWidth: "thin", scrollbarColor: "#DADCD9 transparent" }}
                   >
                     {HEALTH_NICHES.map(niche => (
@@ -137,14 +215,13 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
 
           {activeTab === "url" && (
             <div className="flex gap-2 min-h-[180px] items-start pt-4">
-              <Input 
+              <Input
                 data-testid="input-url"
-                placeholder="https://" 
+                placeholder="https://"
                 className="flex-1"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
               />
-              <Button data-testid="button-fetch-url" variant="default" className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90">
-                Fetch episode →
-              </Button>
             </div>
           )}
         </div>
@@ -152,16 +229,21 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
         {/* Footer (Shared) */}
         <div className="p-5 border-t border-border/50 bg-background/50">
           <div className="space-y-1.5 mb-3">
-            <Label htmlFor="cta" className="text-muted-foreground text-xs">Your CTA for this episode (optional)</Label>
-            <Input 
+            <Label htmlFor="cta" className="text-muted-foreground text-xs">
+              Your CTA for this episode (optional)
+            </Label>
+            <Input
               id="cta"
+              ref={ctaRef}
               data-testid="input-cta"
-              placeholder="e.g. Book a discovery call at yoursite.com — woven into every asset automatically" 
+              placeholder="e.g. Book a discovery call at yoursite.com — woven into every asset automatically"
               className="bg-card"
+              value={cta}
+              onChange={(e) => setCta(e.target.value)}
             />
           </div>
-          
-          <Button 
+
+          <Button
             data-testid="button-generate"
             onClick={handleGenerate}
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 rounded-[10px] text-[15px] font-medium"
@@ -174,7 +256,9 @@ export default function EpisodeInputBar({ requireAuth = false }: EpisodeInputBar
       <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
         <DialogContent className="sm:max-w-md bg-card">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-center">See your results — start free</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-center">
+              See your results — start free
+            </DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
               7 days free, no credit card required
             </DialogDescription>

@@ -1,0 +1,315 @@
+Build the core generation engine for Wellcast Studio. This is the most important part of the application.
+1. Build the API route for extraction (src/app/api/extract/route.ts)
+A POST endpoint that:
+
+Receives a JSON body with fields: input_method (transcript/manual/url), transcript (string), manual_brief (object), url (string), and cta (string)
+Calls the Anthropic API using ANTHROPIC_API_KEY from environment variables
+Uses model claude-sonnet-4-6 and max_tokens 2000
+Runs this extraction prompt:
+
+You are the content intelligence engine for Wellcast Studio — a tool built exclusively for health and wellness podcasters.
+
+Your job is to read a raw podcast transcript or episode brief and extract a clean, structured episode brief. This brief will be used as the foundation for generating all episode content assets.
+
+Return ONLY a valid JSON object with this exact structure — no preamble, no markdown, just valid JSON:
+
+{
+  "show_name": "podcast name or null",
+  "episode_type": "solo | guest_interview | co_hosted | panel",
+  "host_name": "host name or null",
+  "guest_name": "guest full name or null",
+  "guest_credentials": "guest title and expertise in 1 sentence or null",
+  "health_niche": "primary niche",
+  "secondary_niches": ["array of additional niches"],
+  "core_topic": "single clearest 1-sentence description of episode",
+  "key_points": ["5-6 specific key points"],
+  "target_listener": "1 sentence describing exactly who this episode is for",
+  "tone": "clinical_and_educational | warm_and_conversational | story_driven | practical_and_tactical | mix",
+  "quotable_moments": ["3 most shareable quotes or paraphrases"],
+  "actionable_takeaways": ["3 specific things listener can do after this episode"],
+  "sensitive_topics": ["any medically sensitive topics needing careful handling"],
+  "trust_signals": ["credentials, experience, or evidence mentioned"],
+  "episode_length_signal": "short (under 20 min) | medium (20-40 min) | long (40+ min)"
+}
+
+EPISODE INPUT:
+[insert episode content here]
+
+Returns the parsed JSON brief
+Returns a 400 error if input is missing
+Returns a 500 error with message if Anthropic call fails
+
+2. Build the API route for asset generation (src/app/api/generate/route.ts)
+A POST endpoint that:
+
+Receives a JSON body with: episode_brief (object), cta (string), user_id (string), run_id (string)
+Verifies the user has an active subscription or trial in Supabase before proceeding — if not return 403 with message "Trial expired or no active subscription"
+Runs ALL asset generation prompts in parallel using Promise.all()
+Each prompt call uses model claude-sonnet-4-6, max_tokens 1500
+Returns a single JSON object with all assets grouped by category
+
+Run these prompts in parallel:
+Prompt A — Show notes:
+You are the show notes engine for Wellcast Studio — built exclusively for health and wellness podcasters. Using the episode brief below, generate SEO-optimized show notes. Return ONLY valid JSON:
+{
+  "primary_keyword": "best keyword phrase in patient search language",
+  "secondary_keywords": ["2-3 related search phrases"],
+  "search_intent": "what is this listener trying to find",
+  "hook_sentence": "opening sentence starting with listener situation — never starts with In this episode",
+  "full_summary": "complete 150-200 word summary — flows naturally, optimized for primary keyword",
+  "what_youll_learn": ["6 outcome-focused bullets — never topic labels"],
+  "pull_quote": "most clinically credible shareable quote from episode",
+  "cta_block": "3-sentence CTA block using: [CTA]",
+  "internal_linking_suggestions": [{"suggested_topic": "related episode topic", "anchor_text": "exact link text"}]
+}
+EPISODE BRIEF: [brief]
+CTA: [cta]
+Prompt B — SEO titles + keywords:
+You are the SEO titles engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "title_variations": [
+    {"formula": "Patient Question", "title": "...", "search_rating": 1-5, "why": "..."},
+    {"formula": "Myth-Busting", "title": "...", "search_rating": 1-5, "why": "..."},
+    {"formula": "The Number", "title": "...", "search_rating": 1-5, "why": "..."},
+    {"formula": "Problem/Solution", "title": "...", "search_rating": 1-5, "why": "..."},
+    {"formula": "Clinical Insight", "title": "...", "search_rating": 1-5, "why": "..."},
+    {"formula": "Patient Situation", "title": "...", "search_rating": 1-5, "why": "..."}
+  ],
+  "recommended_title": "the single best title",
+  "recommended_reason": "why this one wins",
+  "apple_keywords": ["8 keywords for Apple Podcasts"],
+  "spotify_keywords": ["7 conversational keywords for Spotify"],
+  "youtube_keywords": ["7 question-based long-tail keywords for YouTube"],
+  "short_description": "under 100 characters — standalone hook"
+}
+EPISODE BRIEF: [brief]
+Prompt C — Blog skeleton:
+You are the SEO blog engine for Wellcast Studio — built exclusively for health and wellness podcasters. Generate a full SEO blog skeleton. Return ONLY valid JSON:
+{
+  "target_keyword": "primary keyword",
+  "meta_description": "under 155 characters",
+  "h1": "primary title",
+  "sections": [
+    {
+      "h2": "section heading",
+      "writing_direction": "what to cover and how",
+      "semantic_keywords": ["keywords to weave in"],
+      "h3_subsections": [{"h3": "subheading", "writing_direction": "..."}],
+      "featured_snippet_opportunity": "yes or no and why"
+    }
+  ],
+  "faq": [
+    {"question": "exact question as searched", "answer": "40-60 word answer optimized for featured snippet"}
+  ],
+  "schema_markup": "complete JSON-LD FAQ schema as a string",
+  "word_count_target": "1400-1600 words",
+  "internal_links": [{"placement": "where in article", "anchor_text": "exact text", "topic": "related episode topic"}]
+}
+EPISODE BRIEF: [brief]
+Prompt D — Email newsletter + subject lines:
+You are the email engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "subject_lines": {
+    "direct": "direct subject line",
+    "curiosity": "curiosity subject line",
+    "story": "story-based subject line",
+    "recommended": "direct | curiosity | story",
+    "recommended_reason": "why"
+  },
+  "preview_text": "email preview text under 100 characters",
+  "full_email": "complete email newsletter draft — opens in listener world, creates a gap, sells the listen not the summary, includes PS line",
+  "guest_email": "personalized guest thank-you email with share copy — null if episode_type is not guest_interview"
+}
+EPISODE BRIEF: [brief]
+CTA: [cta]
+Prompt E — Social captions + hashtags:
+You are the social media engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "captions": {
+    "story_open": "caption variation 1 — story opening, launch day",
+    "insight_hook": "caption variation 2 — educational, mid-week",
+    "direct_address": "caption variation 3 — short, for stories and reels"
+  },
+  "hashtags": {
+    "tier_1_broad": ["7 broad wellness hashtags 100k-2M posts"],
+    "tier_2_niche": ["8 niche-specific hashtags 10k-100k posts"],
+    "tier_3_micro": ["7 micro-targeted hashtags 1k-10k posts"],
+    "recommended_stack": "complete copy-paste hashtag string of 20-22 tags"
+  },
+  "instagram_seo_note": "which keywords appear in captions for Instagram search indexing"
+}
+EPISODE BRIEF: [brief]
+Prompt F — Carousel copy:
+You are the carousel copy engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "carousel_title": "title for the carousel series",
+  "slides": [
+    {
+      "slide_number": 1,
+      "type": "hook | teaching | reframe | cta",
+      "headline": "slide headline",
+      "body": "1-2 supporting lines maximum",
+      "design_note": "brief visual direction"
+    }
+  ],
+  "short_caption": "short caption for the carousel post — carousel does the teaching",
+  "publish_timing": "best day and time to post"
+}
+Always generate exactly 8 slides. Slide 7 must always be the pull quote screenshot slide.
+EPISODE BRIEF: [brief]
+Prompt G — Reel hooks + episode hooks:
+You are the hooks engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "reel_hooks": [
+    {"formula": "Counterintuitive | Specific Number | Direct Address | Unfinished Thought | Bold Claim", "hook": "hook text", "use_for": "where to use this", "scroll_stop_mechanism": "why it stops the scroll"}
+  ],
+  "episode_hooks": [
+    {"type": "Story | Diagnosis | Reframe | Credential | Question", "hook": "longer hook for audiograms and pitches"}
+  ]
+}
+Generate 5 reel hooks and 5 episode hooks.
+EPISODE BRIEF: [brief]
+Prompt H — YouTube + Pinterest:
+You are the platform distribution engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "youtube": {
+    "above_fold": "first 150 characters — appears in search results, complete thought",
+    "full_description": "complete YouTube description with intro, bullet points of what is covered, timestamps placeholder, guest links placeholder, host links placeholder, subscribe CTA, keyword list at bottom",
+    "keywords": ["10 YouTube search keywords"]
+  },
+  "pinterest": {
+    "pin_title": "under 100 characters, keyword leads",
+    "pin_description": "under 500 characters, written for search",
+    "keywords": ["10 Pinterest wellness search keywords"],
+    "board_suggestions": ["2-3 board placement suggestions"]
+  }
+}
+EPISODE BRIEF: [brief]
+Prompt I — Amplification:
+You are the amplification engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "guest_share_package": {
+    "cover_note": "brief note to send guest with the package",
+    "feed_caption": "caption written in guest voice",
+    "stories_caption": "short stories caption",
+    "dm_message": "personal DM for guest to send close network"
+  },
+  "cross_promo_pitch": {
+    "primary": "full one-sentence pitch hook for podcast guest outreach",
+    "short": "one-line version for quick outreach"
+  },
+  "sponsor_suggestions": {
+    "tier_1": [{"category": "...", "why_it_fits": "...", "integration_angle": "...", "example_brands": "..."}],
+    "tier_2": [{"category": "...", "why_it_fits": "...", "integration_angle": "..."}],
+    "tier_3": [{"category": "...", "why_it_fits": "..."}],
+    "avoid": ["categories to avoid and why"]
+  },
+  "audience_engagement_prompts": [
+    {"type": "Personal Experience | Revelation | Action", "question": "...", "why_it_works": "...", "deploy": "where to use this"}
+  ]
+}
+Return guest_share_package as null if episode_type is not guest_interview.
+EPISODE BRIEF: [brief]
+CTA: [cta]
+Prompt J — Strategy + scheduling:
+You are the content strategy engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "evergreen_flag": {
+    "status": "evergreen | time_sensitive",
+    "rationale": "why",
+    "reshare_recommendation": "full re-promotion | archive | update before resharing",
+    "content_review_recommended": "timeframe"
+  },
+  "week_1_schedule": {
+    "day_1": ["list of specific actions with platform and asset"],
+    "day_2": ["..."],
+    "day_3": ["..."],
+    "day_4": ["..."],
+    "day_5": ["..."],
+    "day_6": ["..."],
+    "day_7": ["..."]
+  },
+  "ninety_day_calendar": {
+    "weeks_2_4": ["active promotion actions"],
+    "month_2": ["momentum window actions"],
+    "month_3": ["evergreen window actions — conditioned on evergreen flag"]
+  }
+}
+EPISODE BRIEF: [brief]
+Prompt K — Intelligence layer:
+You are the episode intelligence engine for Wellcast Studio — built exclusively for health and wellness podcasters. Return ONLY valid JSON:
+{
+  "transformation_statement": {
+    "primary": "one sentence capturing the shift this episode creates — never uses: understand, learn, discover, explore, dive into, journey, empower, holistic, optimize, wellness journey, transform your health, game changer, deep dive",
+    "alternate_a": "emotionally direct alternate",
+    "alternate_b": "action-oriented alternate",
+    "deployment_uses": ["list of where to use this statement"]
+  },
+  "confidence_score": {
+    "overall_signal": "STRONG EPISODE | GOOD EPISODE | NEEDS ATTENTION",
+    "overall_summary": "one sentence opening with what is working — never opens with what is missing",
+    "dimensions": {
+      "clarity": {"signal": "Strong | Needs Attention | Missing", "note": "specific observation", "coaching_tip": "single highest-leverage improvement or null if strong"},
+      "searchability": {"signal": "Strong | Needs Attention | Missing", "note": "specific observation", "coaching_tip": "..."},
+      "shareability": {"signal": "Strong | Needs Attention | Missing", "note": "specific observation", "coaching_tip": "..."},
+      "cta_strength": {"signal": "Strong | Needs Attention | Missing", "note": "specific observation", "coaching_tip": "..."}
+    },
+    "top_priority": "the single change that would move the needle most"
+  },
+  "credibility_guard": {
+    "overall_rating": "CLEAN | CLEAN WITH REFINEMENTS | NEEDS REVIEW",
+    "flags": [
+      {
+        "asset": "which asset this appears in",
+        "flagged_text": "exact text flagged",
+        "category": "Absolute claim | Unsubstantiated cause-and-effect | Diagnostic language | FTC violation",
+        "risk": "why this is a risk",
+        "rewrite": "safer equally compelling alternative"
+      }
+    ],
+    "clean_assets": ["list of assets that passed with no flags"],
+    "disclaimer": "Wellcast Studio credibility review identifies common liability patterns. It is not a substitute for legal advice."
+  }
+}
+EPISODE BRIEF: [brief]
+CTA: [cta]
+3. After all parallel prompts complete:
+
+Save the complete assets object to the episode_runs table in Supabase using the service role key
+Update the run status to 'complete'
+Increment the user's run_count_this_month in the profiles table
+Return the complete assets object to the client
+
+4. Build the new-run page (src/app/(dashboard)/new-run/page.tsx)
+A clean dashboard page with:
+
+Dashboard header (same as dashboard page)
+Page title: "New episode run" with subtitle "Choose how to bring your episode in"
+The three-tab input component (Transcript / Manual / URL) — same design as landing page but inside the dashboard layout
+CTA input field below tabs
+"Generate 26 assets →" button
+On click: first call /api/extract with the episode input, then call /api/generate with the returned brief
+Show a loading state while generating — a centered spinner with the text "Building your assets..." and a sub-line "This takes about 60-90 seconds"
+On completion: redirect to /run/[id] where id is the run ID from Supabase
+Handle errors gracefully — show an error message if generation fails with a "Try again" button
+
+5. Build a simple loading screen component (src/components/ui/GeneratingScreen.tsx)
+A full-screen overlay (or centered card) showing:
+
+"Wellcast Studio" wordmark
+A progress indicator
+Rotating messages every 4 seconds:
+
+"Extracting your episode brief..."
+"Writing your show notes..."
+"Building your SEO strategy..."
+"Drafting your email newsletter..."
+"Creating your social content..."
+"Building your 90-day calendar..."
+"Running credibility review..."
+"Almost there..."
+
+
+Brand colors throughout — forest and dark on linen background
+
+Do not build the output screen yet — just the generation engine and the input flow that triggers it. Make sure all API routes handle errors gracefully and return appropriate status codes.
