@@ -44,7 +44,7 @@ export default function LandingPage() {
           <img
             src="/wellcast-logo.png"
             alt="Wellcast Studio"
-            style={{ height: "40px", width: "auto" }}
+            style={{ height: "80px", width: "auto" }}
             onError={(e) => {
               const img = e.currentTarget as HTMLImageElement;
               img.style.display = "none";
