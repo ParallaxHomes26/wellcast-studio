@@ -3,6 +3,11 @@
 
 html {
   scroll-behavior: smooth;
+  background-color: #F3F2EE;
+}
+
+body {
+  background-color: #F3F2EE;
 }
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -108,7 +113,7 @@ html {
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 50 17% 95%; /* #F3F2EE linen */
+  --background: 48 18% 94%; /* #F3F2EE linen — exact HSL */
   --foreground: 60 2% 21%; /* #363633 dark */
   --border: 120 3% 85%; /* #DADCD9 border */
   

@@ -39,7 +39,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans">
       {/* Header */}
-      <header className="sticky top-0 z-50 px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#F3F2EE", borderBottom: "none", boxShadow: "none" }}>
+      <header className="sticky top-0 z-50 bg-background px-6 py-4 flex items-center justify-between" style={{ borderBottom: "none", boxShadow: "none", border: "none" }}>
         <div className="flex items-center">
           <img
             src="/wellcast-logo.png"
