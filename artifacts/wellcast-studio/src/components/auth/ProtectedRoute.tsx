@@ -13,7 +13,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
         <img
-          src="/api/storage/public-objects/Logos/wellcast-logo.png"
+          src="/wellcast-logo.png"
           alt="Wellcast Studio"
           className="h-8 w-auto opacity-80"
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
@@ -41,7 +41,7 @@ export function PublicOnlyRoute({ children }: PublicOnlyRouteProps) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
         <img
-          src="/api/storage/public-objects/Logos/wellcast-logo.png"
+          src="/wellcast-logo.png"
           alt="Wellcast Studio"
           className="h-8 w-auto opacity-80"
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
