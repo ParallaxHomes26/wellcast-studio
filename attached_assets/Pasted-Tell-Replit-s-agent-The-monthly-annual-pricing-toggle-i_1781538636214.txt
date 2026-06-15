@@ -1,0 +1,104 @@
+Tell Replit's agent:
+
+The monthly/annual pricing toggle is not showing on the pricing page. Please build it now.
+Add a toggle above the pricing cards on the pricing page (src/app/pricing/page.tsx):
+Toggle component:
+tsxconst [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
+Toggle UI — centered above the cards:
+tsx<div style={{
+  display: 'inline-flex',
+  background: '#F0EFE9',
+  borderRadius: '30px',
+  padding: '4px',
+  margin: '0 auto 48px',
+  border: '0.5px solid #DADCD9'
+}}>
+  <button
+    onClick={() => setBillingPeriod('monthly')}
+    style={{
+      padding: '8px 24px',
+      borderRadius: '26px',
+      border: 'none',
+      fontSize: '13px',
+      fontWeight: billingPeriod === 'monthly' ? '500' : '400',
+      background: billingPeriod === 'monthly' ? 'white' : 'transparent',
+      color: billingPeriod === 'monthly' ? '#363633' : '#897866',
+      cursor: 'pointer',
+      boxShadow: billingPeriod === 'monthly' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+    }}
+  >
+    Monthly
+  </button>
+  <button
+    onClick={() => setBillingPeriod('annual')}
+    style={{
+      padding: '8px 24px',
+      borderRadius: '26px',
+      border: 'none',
+      fontSize: '13px',
+      fontWeight: billingPeriod === 'annual' ? '500' : '400',
+      background: billingPeriod === 'annual' ? 'white' : 'transparent',
+      color: billingPeriod === 'annual' ? '#363633' : '#897866',
+      cursor: 'pointer',
+      boxShadow: billingPeriod === 'annual' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+    }}
+  >
+    Annual
+    <span style={{
+      marginLeft: '6px',
+      fontSize: '11px',
+      background: '#526056',
+      color: 'white',
+      borderRadius: '10px',
+      padding: '2px 8px'
+    }}>
+      Save 30%+
+    </span>
+  </button>
+</div>
+Pricing data — use this object to drive all card content dynamically:
+tsxconst pricing = {
+  basic: {
+    monthly: { price: '$19', period: '/month', priceId: 'price_1Ticc72Zpe8a4y2Maiz2kAz4' },
+    annual: { price: '$157', period: '/year', priceId: 'price_1TicdX2Zpe8a4y2MFC1Eyahf', equivalent: '$13/mo', savings: 'Save $71 vs monthly' }
+  },
+  starter: {
+    monthly: { price: '$37', period: '/month', priceId: 'price_1TiccK2Zpe8a4y2MCuAi0rWt' },
+    annual: { price: '$297', period: '/year', priceId: 'price_1Ticdn2Zpe8a4y2Mlymy9XFE', equivalent: '$25/mo', savings: 'Save $147 vs monthly' }
+  },
+  pro: {
+    monthly: { price: '$57', period: '/month', priceId: 'price_1TiccX2Zpe8a4y2MUYJntCer' },
+    annual: { price: '$497', period: '/year', priceId: 'price_1Tice32Zpe8a4y2M6VlwtdKV', equivalent: '$41/mo', savings: 'Save $187 vs monthly' }
+  }
+}
+Each pricing card should display dynamically based on billingPeriod:
+tsxconst currentPricing = pricing.basic[billingPeriod]
+
+// Price display
+<div style={{ fontSize: '42px', fontFamily: 'Georgia, serif', fontWeight: '300', color: '#363633' }}>
+  {currentPricing.price}
+  <span style={{ fontSize: '16px', color: '#897866' }}>{currentPricing.period}</span>
+</div>
+
+// Annual only — show equivalent and savings
+{billingPeriod === 'annual' && (
+  <div style={{ marginTop: '4px' }}>
+    <div style={{ fontSize: '13px', color: '#897866' }}>{currentPricing.equivalent} billed annually</div>
+    <div style={{ 
+      fontSize: '12px', 
+      color: '#526056', 
+      background: '#EEF1EE', 
+      borderRadius: '4px', 
+      padding: '2px 8px', 
+      display: 'inline-block',
+      marginTop: '4px'
+    }}>
+      {currentPricing.savings}
+    </div>
+  </div>
+)}
+CTA buttons must use the correct priceId based on billingPeriod:
+tsx<button onClick={() => handleCheckout(currentPricing.priceId)}>
+  Start 7-day free trial
+</button>
+Make sure the pricing page is a client component with 'use client' at the top since it uses useState for the toggle.
