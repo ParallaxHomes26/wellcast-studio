@@ -1,0 +1,88 @@
+There are two critical errors showing in the browser console that need to be fixed:
+Fix 1 — 403 errors when fetching from Supabase (RLS policy issue)
+The app is getting 403 Forbidden on all Supabase profile fetches. The RLS policies on the profiles table are blocking authenticated users from reading their own data.
+Please run this SQL directly against the Supabase database using the service role key to fix the RLS policies:
+In the Supabase client initialization for admin operations make sure you are using the service role key not the anon key. The anon key respects RLS — the service role key bypasses it.
+For client-side profile fetches (in the browser) the anon key should work IF the RLS policies are correct. Check the current RLS policies by looking at what policies exist on the profiles table.
+The correct policies should be:
+sql-- Drop existing policies first
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
+
+-- Recreate correctly
+CREATE POLICY "Users can view own profile"
+ON profiles FOR SELECT
+USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" 
+ON profiles FOR UPDATE
+USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile"
+ON profiles FOR INSERT
+WITH CHECK (auth.uid() = id);
+Run these in Supabase SQL editor.
+Also — in the app code, wherever the profile is being fetched on the dashboard, make sure the Supabase client being used is initialized with the anon key and the user's session is active before the fetch:
+javascript// Get current session first
+const { data: { session } } = await supabase.auth.getSession()
+
+if (!session) {
+  // redirect to login
+  return
+}
+
+// Then fetch profile
+const { data: profile, error } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', session.user.id)
+  .single()
+
+console.log('Session user ID:', session.user.id)
+console.log('Profile result:', profile)
+console.log('Profile error:', error)
+Add those console.log statements so we can verify it's working.
+Fix 2 — 500 error on SignupPage.tsx
+The file /src/pages/SignupPage.tsx has a syntax error or is importing a module that doesn't exist.
+Please:
+
+Check the file for syntax errors
+Check all imports at the top of the file — remove any import that references a file that doesn't exist
+Make sure the signup flow works without email confirmation — after supabase.auth.signUp() succeeds immediately create the profile row and redirect to dashboard:
+
+javascriptconst { data: authData, error: signUpError } = await supabase.auth.signUp({
+  email,
+  password,
+  options: { data: { first_name: firstName } }
+})
+
+if (authData.user && !signUpError) {
+  // Create profile row immediately
+  const trialStart = new Date()
+  const trialEnd = new Date()
+  trialEnd.setDate(trialEnd.getDate() + 7)
+  
+  await supabase.from('profiles').upsert({
+    id: authData.user.id,
+    email: authData.user.email,
+    first_name: firstName,
+    subscription_status: 'trialing',
+    subscription_tier: 'free_trial',
+    trial_starts_at: trialStart.toISOString(),
+    trial_ends_at: trialEnd.toISOString(),
+    run_count_this_month: 0,
+    run_count_reset_at: trialStart.toISOString()
+  }, { onConflict: 'id' })
+  
+  // Redirect to dashboard immediately
+  window.location.href = '/dashboard'
+}
+Fix 3 — Subscription check must handle 403 gracefully
+In the subscription checking logic, if the profile fetch fails or returns null — do NOT default to expired. Default to trialing instead so users aren't incorrectly blocked:
+javascript// If we can't fetch the profile, fail open not closed
+if (!profile || error) {
+  console.error('Profile fetch failed:', error)
+  return { allowed: true } // fail open during trial period
+}
+List every file changed.

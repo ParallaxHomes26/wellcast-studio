@@ -33,7 +33,8 @@ export interface Profile {
 }
 
 export function getSubscriptionTier(profile: Profile | null): SubscriptionTier {
-  if (!profile) return "expired";
+  // If profile is null (e.g. fetch failed due to RLS), fail open as trialing
+  if (!profile) return "trialing";
 
   // Null/missing status → treat as trialing (new accounts before trigger fires)
   if (!profile.subscription_status || profile.subscription_status === "trialing") {

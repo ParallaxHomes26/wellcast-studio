@@ -63,7 +63,7 @@ export default function SignupPage() {
     if (signUpError) {
       setError(signUpError.message);
     } else {
-      setLocation("/dashboard");
+      window.location.href = "/dashboard";
     }
   };
 
