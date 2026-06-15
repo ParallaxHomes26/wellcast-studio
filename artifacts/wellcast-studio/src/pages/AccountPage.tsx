@@ -5,40 +5,11 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, ExternalLink } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
-import { getSubscriptionTier, tierLabel, trialDaysRemaining, getRunLimit } from "@/lib/subscription";
-
-function StatusBadge({ status }: { status: string | null | undefined }) {
-  const s = status ?? "unknown";
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    active:   { label: "Active",    bg: "#526056/10", color: "#526056" },
-    trialing: { label: "Trialing",  bg: "#897866/10", color: "#897866" },
-    past_due: { label: "Past Due",  bg: "#dc2626/10", color: "#dc2626" },
-    canceled: { label: "Canceled",  bg: "#6b7280/10", color: "#6b7280" },
-    unknown:  { label: "No Plan",   bg: "#6b7280/10", color: "#6b7280" },
-  };
-  const cfg = map[s] ?? map.unknown;
-  return (
-    <span
-      className="px-2.5 py-0.5 rounded-full text-[12px] font-medium"
-      style={{ background: `hsl(from ${cfg.color} h s l / 0.12)`, color: cfg.color }}
-    >
-      {cfg.label}
-    </span>
-  );
-}
 
 export default function AccountPage() {
   const { user } = useAuth();
   const { profile, loading } = useProfile();
   const [portalLoading, setPortalLoading] = useState(false);
-
-  const tier = getSubscriptionTier(profile);
-  const daysLeft = trialDaysRemaining(profile);
-  const runLimit = getRunLimit(tier);
-  const runsUsed = profile?.run_count_this_month ?? 0;
-
-  const resetDate = new Date();
-  resetDate.setMonth(resetDate.getMonth() + 1, 1);
 
   const openBillingPortal = async () => {
     if (!user) return;
@@ -83,7 +54,6 @@ export default function AccountPage() {
         <section className="bg-card border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-[18px] font-medium text-foreground">Subscription</h2>
-            <StatusBadge status={profile?.subscription_status} />
           </div>
 
           {loading ? (
@@ -94,57 +64,28 @@ export default function AccountPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <p className="font-medium text-[15px] text-foreground">
-                      Wellcast {tierLabel(tier)}
+                      {profile?.subscription_status === "active" ? "Active plan" : "Free trial"}
                     </p>
-                    {tier === "trialing" && (
-                      <p className="text-[13px] text-muted-foreground mt-0.5">
-                        Trial ends in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
-                      </p>
-                    )}
-                    {profile?.current_period_end && tier !== "trialing" && (
+                    {profile?.current_period_end && (
                       <p className="text-[13px] text-muted-foreground mt-0.5">
                         Current period ends {new Date(profile.current_period_end).toLocaleDateString()}
                       </p>
                     )}
                   </div>
-                  <span className="text-[13px] text-muted-foreground">
-                    {runLimit === "unlimited" ? "Unlimited runs" : `${runsUsed} / ${runLimit} runs`}
-                  </span>
                 </div>
-
-                {/* Run usage bar */}
-                {runLimit !== "unlimited" && (
-                  <div>
-                    <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(100, (runsUsed / (runLimit as number)) * 100)}%`,
-                          background: runsUsed >= (runLimit as number) ? "#dc2626" : "#526056",
-                        }}
-                      />
-                    </div>
-                    <p className="text-[12px] text-muted-foreground mt-1">
-                      Resets on {resetDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}
-                    </p>
-                  </div>
-                )}
               </div>
 
-              {/* Upgrade nudge */}
-              {(tier === "trialing" || tier === "basic" || tier === "starter") && (
-                <div className="bg-background border border-border rounded-lg p-4">
-                  <p className="text-[14px] font-medium text-foreground mb-1">Upgrade your plan</p>
-                  <p className="text-[13px] text-muted-foreground mb-3">
-                    Get more runs and unlock premium features.
-                  </p>
-                  <Link href="/pricing">
-                    <Button variant="outline" className="border-border text-[13px]">
-                      View plans
-                    </Button>
-                  </Link>
-                </div>
-              )}
+              <div className="bg-background border border-border rounded-lg p-4">
+                <p className="text-[14px] font-medium text-foreground mb-1">Upgrade your plan</p>
+                <p className="text-[13px] text-muted-foreground mb-3">
+                  Get more runs and unlock premium features.
+                </p>
+                <Link href="/pricing">
+                  <Button variant="outline" className="border-border text-[13px]">
+                    View plans
+                  </Button>
+                </Link>
+              </div>
 
               <div className="flex gap-3">
                 <Button
