@@ -1,0 +1,40 @@
+This is a critical revelation — this is not a Next.js app, it's a Vite + React app. That explains everything:
+
+Why VITE_SUPABASE_URL was in Configurations — correct for this app
+Why src/app/ folder structure didn't exist
+Why 'use client' directives weren't working
+Why process.env.NEXT_PUBLIC_* variables weren't being read
+
+The actual file is at artifacts/wellcast-studio/src/pages/PricingPage.tsx not where we thought.
+Do a hard refresh first — Cmd+Shift+R on Mac — to see if the toggle is actually already working as Replit says.
+But we also need to fix the environment variables immediately. Tell Replit's agent:
+
+I now understand this is a Vite + React app, not Next.js. Please make these critical fixes:
+1. Fix all environment variables throughout the entire codebase
+Replace every instance of process.env.NEXT_PUBLIC_* with import.meta.env.VITE_*:
+
+process.env.NEXT_PUBLIC_SUPABASE_URL → import.meta.env.VITE_SUPABASE_URL
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY → import.meta.env.VITE_SUPABASE_ANON_KEY
+process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY → import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+process.env.NEXT_PUBLIC_APP_URL → import.meta.env.VITE_APP_URL
+process.env.ANTHROPIC_API_KEY → this stays as process.env only if used server-side — tell me where it's being called from
+process.env.STRIPE_SECRET_KEY → tell me where this is being used
+process.env.SUPABASE_SERVICE_ROLE_KEY → tell me where this is being used
+
+2. Tell me the complete project structure
+List all files in artifacts/wellcast-studio/src/ so I understand the full architecture of this Vite app — pages, components, API calls, everything.
+3. Confirm how API calls are being made
+In a Vite app there is no built-in API route system like Next.js. Tell me:
+
+How are calls to /api/generate, /api/extract, and /api/stripe/* being handled?
+Is there a separate backend server file?
+Are these being proxied through Vite's dev server?
+
+4. Add these to Replit Configurations (not Secrets) since this is a Vite app:
+
+VITE_STRIPE_PUBLISHABLE_KEY — the pk_test_ key
+VITE_APP_URL — the Replit dev URL
+VITE_SUPABASE_URL — already exists
+VITE_SUPABASE_ANON_KEY — already exists
+
+List every file changed and the complete project structure.
