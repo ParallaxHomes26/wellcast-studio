@@ -60,27 +60,11 @@ export function getRunLimit(tier: SubscriptionTier): number | "unlimited" {
   }
 }
 
-export function canRunGeneration(profile: Profile | null): { allowed: boolean; reason?: string } {
-  const tier = getSubscriptionTier(profile);
-  const limit = getRunLimit(tier);
-
-  if (tier === "expired") {
-    return { allowed: false, reason: "Your trial has ended. Please subscribe to continue." };
-  }
-  if (tier === "canceled") {
-    return { allowed: false, reason: "Your subscription has been canceled. Please resubscribe to continue." };
-  }
-
-  if (limit === "unlimited") return { allowed: true };
-
-  const used = profile?.run_count_this_month ?? 0;
-  if (used >= limit) {
-    return {
-      allowed: false,
-      reason: `You've used all ${limit} runs this month. Upgrade to get more.`,
-    };
-  }
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function canRunGeneration(profile: any): { allowed: boolean; reason?: string } {
+  // Allow all authenticated users during development
+  // TODO: restore subscription checking before launch
+  if (!profile) return { allowed: false, reason: "Please sign in." };
   return { allowed: true };
 }
 

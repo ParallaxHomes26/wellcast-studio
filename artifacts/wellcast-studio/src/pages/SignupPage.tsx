@@ -42,27 +42,29 @@ export default function SignupPage() {
       },
     });
 
-    if (!signUpError && authData.user) {
+    if (signUpError) {
+      setLoading(false);
+      setError(signUpError.message);
+      return;
+    }
+
+    if (authData?.user) {
       const now = new Date();
-      const trialEnd = new Date(now);
+      const trialEnd = new Date();
       trialEnd.setDate(trialEnd.getDate() + 7);
 
       await supabase.from("profiles").upsert({
         id: authData.user.id,
         email: authData.user.email,
-        full_name: firstName,
+        first_name: firstName || "",
         subscription_status: "trialing",
+        subscription_tier: "free_trial",
+        trial_starts_at: now.toISOString(),
         trial_ends_at: trialEnd.toISOString(),
         run_count_this_month: 0,
         run_count_reset_at: now.toISOString(),
       }, { onConflict: "id" });
-    }
 
-    setLoading(false);
-
-    if (signUpError) {
-      setError(signUpError.message);
-    } else {
       window.location.href = "/dashboard";
     }
   };
