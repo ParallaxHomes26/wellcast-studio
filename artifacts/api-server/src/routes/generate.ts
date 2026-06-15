@@ -267,14 +267,51 @@ router.post("/generate", async (req, res): Promise<void> => {
 
   req.log.info({ user_id, run_id: runId }, "Starting asset generation");
 
-  // Subscription check
-  const { data: profile } = await supabaseAdmin
+  // Subscription check — fetch profile, create one on the fly if missing
+  const { data: fetchedProfile, error: profileError } = await supabaseAdmin
     .from("profiles")
     .select("*")
     .eq("id", user_id)
     .single();
 
-  const { allowed, reason } = canRunGeneration(profile as Profile | null);
+  req.log.info(
+    { user_id, profile_found: !!fetchedProfile, profile_error: profileError?.message ?? null },
+    "Profile lookup"
+  );
+
+  let profile: Profile | null = fetchedProfile as Profile | null;
+
+  if (!profile) {
+    req.log.warn({ user_id }, "No profile found — upserting a trial profile");
+    const now = new Date();
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 7);
+
+    const { data: newProfile, error: upsertError } = await supabaseAdmin
+      .from("profiles")
+      .upsert(
+        {
+          id: user_id,
+          subscription_status: "trialing",
+          subscription_tier: "free_trial",
+          trial_starts_at: now.toISOString(),
+          trial_ends_at: trialEnd.toISOString(),
+          run_count_this_month: 0,
+          run_count_reset_at: now.toISOString(),
+        },
+        { onConflict: "id" }
+      )
+      .select()
+      .single();
+
+    if (upsertError) {
+      req.log.error({ user_id, error: upsertError.message }, "Profile upsert failed");
+    }
+
+    profile = (newProfile as Profile | null) ?? ({ id: user_id, subscription_status: "trialing" } as unknown as Profile);
+  }
+
+  const { allowed, reason } = canRunGeneration(profile);
   if (!allowed) {
     res.status(403).json({ error: reason ?? "Subscription required" });
     return;
