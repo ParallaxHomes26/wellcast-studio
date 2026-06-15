@@ -15,6 +15,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import NewRunPage from "@/pages/NewRunPage";
 import RunDetailPage from "@/pages/RunDetailPage";
 import AccountPage from "@/pages/AccountPage";
+import PricingPage from "@/pages/PricingPage";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <Route path="/pricing" component={PricingPage} />
 
       <Route path="/login">
         <PublicOnlyRoute>

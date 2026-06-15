@@ -5,6 +5,7 @@ import generateRouter from "./generate";
 import runsRouter from "./runs";
 import storageRouter from "./storage";
 import storageTestRouter from "./storageTest";
+import stripeRouter from "./stripe";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(generateRouter);
 router.use(runsRouter);
 router.use(storageRouter);
 router.use(storageTestRouter);
+router.use(stripeRouter);
 
 export default router;

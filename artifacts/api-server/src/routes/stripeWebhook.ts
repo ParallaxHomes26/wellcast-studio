@@ -1,0 +1,106 @@
+import type { RequestHandler } from "express";
+import Stripe from "stripe";
+import { getStripe } from "../lib/stripeClient";
+import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { logger } from "../lib/logger";
+
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
+
+const stripeWebhookHandler: RequestHandler = async (req, res) => {
+  let event: Stripe.Event;
+
+  if (webhookSecret) {
+    const sig = req.headers["stripe-signature"];
+    if (!sig) {
+      res.status(400).json({ error: "Missing stripe-signature header" });
+      return;
+    }
+    try {
+      event = getStripe().webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Webhook verification failed";
+      logger.warn({ err }, `Stripe webhook signature verification failed: ${msg}`);
+      res.status(400).json({ error: msg });
+      return;
+    }
+  } else {
+    logger.warn("STRIPE_WEBHOOK_SECRET not set — skipping signature verification");
+    event = JSON.parse((req.body as Buffer).toString()) as Stripe.Event;
+  }
+
+  logger.info({ type: event.type }, "Stripe webhook received");
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.user_id;
+        const isFoundingMember = session.metadata?.is_founding_member === "true";
+        if (!userId) break;
+
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            stripe_subscription_id: session.subscription as string,
+            subscription_status: "active",
+            ...(isFoundingMember ? { founding_member: true } : {}),
+          })
+          .eq("id", userId);
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        const { data: profiles } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("stripe_subscription_id", sub.id);
+
+        if (profiles && profiles.length > 0) {
+          const priceId = sub.items.data[0]?.price?.id ?? null;
+          await supabaseAdmin
+            .from("profiles")
+            .update({
+              subscription_status: sub.status,
+              subscription_price_id: priceId,
+              current_period_end: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000).toISOString(),
+            })
+            .eq("stripe_subscription_id", sub.id);
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
+        await supabaseAdmin
+          .from("profiles")
+          .update({ subscription_status: "canceled" })
+          .eq("stripe_subscription_id", sub.id);
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId = (invoice as unknown as { subscription: string }).subscription;
+        if (subId) {
+          await supabaseAdmin
+            .from("profiles")
+            .update({ subscription_status: "past_due" })
+            .eq("stripe_subscription_id", subId);
+        }
+        break;
+      }
+
+      default:
+        logger.info({ type: event.type }, "Unhandled Stripe event type");
+    }
+  } catch (err) {
+    logger.error({ err, type: event.type }, "Error processing Stripe webhook event");
+    res.status(500).json({ error: "Webhook handler error" });
+    return;
+  }
+
+  res.json({ received: true });
+};
+
+export default stripeWebhookHandler;

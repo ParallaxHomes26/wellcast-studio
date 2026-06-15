@@ -1,0 +1,295 @@
+Build Phase 3 — Stripe subscription gating, billing, and usage tracking.
+First add this to Replit Secrets:
+STRIPE_SECRET_KEY=sk_test_... (already set)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_... (already set)
+STRIPE_WEBHOOK_SECRET= (leave empty for now — we'll add after webhook setup)
+Use these exact Stripe Price IDs throughout:
+BASIC_MONTHLY: price_1TibHO2Zpe8a4y2MgNN4wVrI
+STARTER_MONTHLY: price_1TibHw2Zpe8a4y2MouaBgTQW
+PRO_MONTHLY: price_1TibIO2Zpe8a4y2MW1yIg27S
+FOUNDING_MEMBER: price_1TibKD2Zpe8a4y2MLI3ii0KD
+BASIC_ANNUAL: price_1TibL22Zpe8a4y2MWJx4WYFY
+STARTER_ANNUAL: price_1TibLg2Zpe8a4y2M2MWuaYjV
+PRO_ANNUAL: price_1TibM02Zpe8a4y2MiKl4WaI5
+1. Add these columns to the profiles table in Supabase
+Run this SQL in the Supabase SQL editor:
+sqlALTER TABLE profiles 
+ADD COLUMN IF NOT EXISTS stripe_customer_id text,
+ADD COLUMN IF NOT EXISTS stripe_subscription_id text,
+ADD COLUMN IF NOT EXISTS subscription_status text DEFAULT 'trialing',
+ADD COLUMN IF NOT EXISTS subscription_price_id text,
+ADD COLUMN IF NOT EXISTS current_period_end timestamptz,
+ADD COLUMN IF NOT EXISTS founding_member boolean DEFAULT false;
+2. Create a Stripe customer API route (src/app/api/stripe/create-customer/route.ts)
+POST endpoint that:
+
+Gets the authenticated user from Supabase session
+Creates a Stripe customer with their email and name
+Saves the stripe_customer_id to their profiles row in Supabase
+Returns the customer ID
+
+typescriptimport Stripe from 'stripe'
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+
+export async function POST(request: Request) {
+  // Get user from Supabase auth
+  // Create Stripe customer
+  // Save customer ID to profiles table
+  // Return customer ID
+}
+3. Create a checkout session API route (src/app/api/stripe/create-checkout/route.ts)
+POST endpoint that:
+
+Receives: price_id, is_founding_member (boolean)
+Gets authenticated user and their stripe_customer_id from Supabase
+If no stripe_customer_id exists, creates a Stripe customer first
+Creates a Stripe checkout session with:
+
+customer: stripe_customer_id
+line_items: the price_id
+mode: 'subscription'
+trial_period_days: 7
+success_url: ${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success
+cancel_url: ${process.env.NEXT_PUBLIC_APP_URL}/pricing
+metadata: { user_id: userId, is_founding_member: is_founding_member }
+
+
+Returns the checkout session URL
+
+Add NEXT_PUBLIC_APP_URL to Replit Secrets with the current Replit dev URL.
+4. Create a Stripe webhook handler (src/app/api/stripe/webhook/route.ts)
+POST endpoint that:
+
+Verifies the Stripe webhook signature using STRIPE_WEBHOOK_SECRET
+Handles these events:
+
+typescriptswitch (event.type) {
+  case 'checkout.session.completed':
+    // Update profiles: set stripe_subscription_id, subscription_status to 'active'
+    // If metadata.is_founding_member === 'true': set founding_member = true
+    break
+    
+  case 'customer.subscription.updated':
+    // Update profiles: subscription_status, current_period_end, subscription_price_id
+    break
+    
+  case 'customer.subscription.deleted':
+    // Update profiles: subscription_status to 'canceled'
+    break
+    
+  case 'invoice.payment_failed':
+    // Update profiles: subscription_status to 'past_due'
+    break
+}
+Use the Supabase service role client for all database updates in the webhook.
+5. Create a subscription check utility (src/lib/subscription.ts)
+typescriptexport type SubscriptionTier = 'trialing' | 'basic' | 'starter' | 'pro' | 'founding_member' | 'expired' | 'canceled'
+
+export function getSubscriptionTier(profile: any): SubscriptionTier {
+  if (!profile) return 'expired'
+  
+  // Check if trial is active
+  if (profile.subscription_status === 'trialing') {
+    const trialEnd = new Date(profile.trial_ends_at)
+    if (trialEnd > new Date()) return 'trialing'
+    else return 'expired'
+  }
+  
+  // Check founding member
+  if (profile.founding_member && profile.subscription_status === 'active') {
+    return 'founding_member'
+  }
+  
+  // Check active subscription by price ID
+  if (profile.subscription_status === 'active') {
+    const priceId = profile.subscription_price_id
+    if ([
+      'price_1TibHO2Zpe8a4y2MgNN4wVrI',
+      'price_1TibL22Zpe8a4y2MWJx4WYFY'
+    ].includes(priceId)) return 'basic'
+    
+    if ([
+      'price_1TibHw2Zpe8a4y2MouaBgTQW',
+      'price_1TibLg2Zpe8a4y2M2MWuaYjV'
+    ].includes(priceId)) return 'starter'
+    
+    if ([
+      'price_1TibIO2Zpe8a4y2MW1yIg27S',
+      'price_1TibM02Zpe8a4y2MiKl4WaI5'
+    ].includes(priceId)) return 'pro'
+    
+    if (priceId === 'price_1TibKD2Zpe8a4y2MLI3ii0KD') return 'founding_member'
+  }
+  
+  return 'expired'
+}
+
+export function getRunLimit(tier: SubscriptionTier): number | 'unlimited' {
+  switch (tier) {
+    case 'trialing': return 3 // 3 runs during trial
+    case 'basic': return 2
+    case 'starter': return 4
+    case 'pro': return 'unlimited'
+    case 'founding_member': return 'unlimited'
+    default: return 0
+  }
+}
+
+export function canRunGeneration(profile: any): { allowed: boolean, reason?: string } {
+  const tier = getSubscriptionTier(profile)
+  const limit = getRunLimit(tier)
+  
+  if (tier === 'expired' || tier === 'canceled') {
+    return { allowed: false, reason: 'Your trial has ended. Please subscribe to continue.' }
+  }
+  
+  if (limit === 'unlimited') return { allowed: true }
+  
+  if (profile.run_count_this_month >= limit) {
+    return { 
+      allowed: false, 
+      reason: `You've used all ${limit} runs this month. Upgrade to get more.`
+    }
+  }
+  
+  return { allowed: true }
+}
+6. Update the generate API route to check subscription
+In /api/generate/route.ts add subscription check at the top before running any prompts:
+typescript// Get user profile from Supabase
+const { data: profile } = await supabaseAdmin
+  .from('profiles')
+  .select('*')
+  .eq('id', userId)
+  .single()
+
+// Check if user can run generation
+const { allowed, reason } = canRunGeneration(profile)
+if (!allowed) {
+  return NextResponse.json({ error: reason }, { status: 403 })
+}
+7. Build the pricing page (src/app/pricing/page.tsx)
+A full pricing page at /pricing with:
+Header: same as landing page
+
+Page title: "Simple pricing for serious podcasters"
+
+Subtitle: "Start free for 7 days. No credit card required."
+Toggle at top: Monthly / Annual (default: Monthly) — switching shows annual prices with a "Save 20%+" badge
+Four pricing cards in a row:
+Basic — $19/month or $157/year
+
+2 episode runs per month
+All 26 assets per run
+SEO optimization
+90-day repurposing calendar
+Email support
+CTA: "Start 7-day free trial"
+
+Starter — $37/month or $297/year
+
+4 episode runs per month
+All 26 assets per run
+SEO optimization
+90-day repurposing calendar
+Episode Confidence Score
+Email support
+CTA: "Start 7-day free trial"
+
+Pro — $57/month or $497/year (featured card — dark background)
+
+Unlimited episode runs
+All 26 assets per run
+SEO optimization
+90-day repurposing calendar
+Episode Confidence Score
+Clinical Credibility Guard
+Listener Transformation Statement
+Guest share package
+Priority support
+CTA: "Start 7-day free trial"
+
+Founding Member — $37/month locked forever
+
+Badge: "50 spots only"
+Everything in Pro
+Price locked for life
+Founding member badge
+Early access to all new features
+CTA: "Join the waitlist → getwellcast.com/waitlist"
+Note: "Available to waitlist members before public launch"
+
+Each CTA button calls /api/stripe/create-checkout with the correct price_id for the selected billing period. On success redirect to the Stripe checkout URL.
+8. Build the account/billing page (src/app/(dashboard)/account/page.tsx)
+Dashboard page showing:
+Current plan section:
+
+Plan name and price
+Status badge: Active / Trialing / Past Due / Canceled
+Trial ends: [date] if trialing — with days remaining
+Current period ends: [date] if subscribed
+Run usage: "X of Y runs used this month" with a progress bar
+Resets on: [first of next month]
+
+Upgrade section (shown if on Basic or Starter):
+
+"Upgrade your plan" heading
+Cards for the next tier up with upgrade CTA
+Clicking upgrade calls create-checkout with new price_id
+
+Billing management section:
+
+"Manage billing" button that creates a Stripe billing portal session
+Create API route /api/stripe/billing-portal/route.ts that:
+
+Gets user's stripe_customer_id
+Creates a Stripe billing portal session
+Returns the portal URL
+Frontend redirects to portal URL
+
+
+
+9. Add subscription status to dashboard
+In the main dashboard page show:
+
+Current plan as a pill in the header: "Pro" / "Starter" / "Basic" / "Trial — X days left"
+If trial: amber pill with days remaining and "Upgrade" link
+If run limit reached: show a banner "You've used all your runs this month — upgrade for more or wait until [reset date]"
+If expired: show a full-width banner blocking new runs: "Your trial has ended — choose a plan to continue"
+
+10. Add trial expiry warning
+In the dashboard show a warning banner when trial has 2 or fewer days remaining:
+⚠️ Your free trial ends in X days. Choose a plan to keep access to your episode runs.
+[View plans →]
+11. Update the new-run page
+Before showing the input form check subscription status:
+
+If expired: show upgrade prompt instead of input form
+If run limit reached: show "You've reached your monthly limit" with upgrade CTA
+If allowed: show normal input form with "X of Y runs remaining this month" note below the generate button (hide for unlimited tiers)
+
+12. Add run count reset logic
+In the generate API route, after a successful run:
+typescript// Check if run_count_reset_at is in a previous month — if so reset the counter
+const resetDate = new Date(profile.run_count_reset_at)
+const now = new Date()
+const needsReset = resetDate.getMonth() !== now.getMonth() || 
+                   resetDate.getFullYear() !== now.getFullYear()
+
+if (needsReset) {
+  await supabaseAdmin
+    .from('profiles')
+    .update({ 
+      run_count_this_month: 1,
+      run_count_reset_at: now.toISOString()
+    })
+    .eq('id', userId)
+} else {
+  await supabaseAdmin
+    .from('profiles')
+    .update({ 
+      run_count_this_month: profile.run_count_this_month + 1 
+    })
+    .eq('id', userId)
+}
+Make sure all pages handle loading states gracefully and show appropriate error messages if Stripe calls fail. Use test mode throughout — do not activate live payments.

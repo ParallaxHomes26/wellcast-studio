@@ -1,0 +1,99 @@
+export type SubscriptionTier =
+  | "trialing"
+  | "basic"
+  | "starter"
+  | "pro"
+  | "founding_member"
+  | "expired"
+  | "canceled";
+
+export const PRICE_IDS = {
+  BASIC_MONTHLY:    "price_1TibHO2Zpe8a4y2MgNN4wVrI",
+  STARTER_MONTHLY:  "price_1TibHw2Zpe8a4y2MouaBgTQW",
+  PRO_MONTHLY:      "price_1TibIO2Zpe8a4y2MW1yIg27S",
+  FOUNDING_MEMBER:  "price_1TibKD2Zpe8a4y2MLI3ii0KD",
+  BASIC_ANNUAL:     "price_1TibL22Zpe8a4y2MWJx4WYFY",
+  STARTER_ANNUAL:   "price_1TibLg2Zpe8a4y2M2MWuaYjV",
+  PRO_ANNUAL:       "price_1TibM02Zpe8a4y2MiKl4WaI5",
+} as const;
+
+export interface Profile {
+  id: string;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: string | null;
+  subscription_price_id?: string | null;
+  current_period_end?: string | null;
+  founding_member?: boolean | null;
+  trial_ends_at?: string | null;
+  run_count_this_month?: number | null;
+  run_count_reset_at?: string | null;
+  email?: string | null;
+  full_name?: string | null;
+}
+
+export function getSubscriptionTier(profile: Profile | null): SubscriptionTier {
+  if (!profile) return "expired";
+
+  if (profile.subscription_status === "trialing") {
+    if (!profile.trial_ends_at) return "trialing";
+    return new Date(profile.trial_ends_at) > new Date() ? "trialing" : "expired";
+  }
+
+  if (profile.founding_member && profile.subscription_status === "active") return "founding_member";
+
+  if (profile.subscription_status === "active") {
+    const p = profile.subscription_price_id ?? "";
+    if ([PRICE_IDS.BASIC_MONTHLY, PRICE_IDS.BASIC_ANNUAL].includes(p as never)) return "basic";
+    if ([PRICE_IDS.STARTER_MONTHLY, PRICE_IDS.STARTER_ANNUAL].includes(p as never)) return "starter";
+    if ([PRICE_IDS.PRO_MONTHLY, PRICE_IDS.PRO_ANNUAL].includes(p as never)) return "pro";
+    if (p === PRICE_IDS.FOUNDING_MEMBER) return "founding_member";
+  }
+
+  if (profile.subscription_status === "canceled") return "canceled";
+  return "expired";
+}
+
+export function getRunLimit(tier: SubscriptionTier): number | "unlimited" {
+  switch (tier) {
+    case "trialing":        return 3;
+    case "basic":           return 2;
+    case "starter":         return 4;
+    case "pro":             return "unlimited";
+    case "founding_member": return "unlimited";
+    default:                return 0;
+  }
+}
+
+export function tierLabel(tier: SubscriptionTier): string {
+  switch (tier) {
+    case "trialing":        return "Trial";
+    case "basic":           return "Basic";
+    case "starter":         return "Starter";
+    case "pro":             return "Pro";
+    case "founding_member": return "Founding Member";
+    case "expired":         return "Expired";
+    case "canceled":        return "Canceled";
+  }
+}
+
+export function trialDaysRemaining(profile: Profile | null): number {
+  if (!profile?.trial_ends_at) return 0;
+  const diff = new Date(profile.trial_ends_at).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
+export function canRunGeneration(profile: Profile | null): { allowed: boolean; reason?: string } {
+  const tier = getSubscriptionTier(profile);
+  const limit = getRunLimit(tier);
+
+  if (tier === "expired") return { allowed: false, reason: "Your trial has ended. Please choose a plan to continue." };
+  if (tier === "canceled") return { allowed: false, reason: "Your subscription has been canceled. Please resubscribe." };
+  if (limit === "unlimited") return { allowed: true };
+
+  const used = profile?.run_count_this_month ?? 0;
+  if (used >= limit) {
+    return { allowed: false, reason: `You've used all ${limit} runs this month. Upgrade to get more.` };
+  }
+  return { allowed: true };
+}

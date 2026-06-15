@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import { v4 as uuidv4 } from "uuid";
 import { callClaude } from "../lib/anthropicClient";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { canRunGeneration, type Profile } from "../lib/subscription";
 
 const router: IRouter = Router();
 
@@ -266,8 +267,18 @@ router.post("/generate", async (req, res): Promise<void> => {
 
   req.log.info({ user_id, run_id: runId }, "Starting asset generation");
 
-  // Subscription check — pass through; tighten once billing is live
-  // TODO: query profiles table for subscription_status when billing is implemented
+  // Subscription check
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", user_id)
+    .single();
+
+  const { allowed, reason } = canRunGeneration(profile as Profile | null);
+  if (!allowed) {
+    res.status(403).json({ error: reason ?? "Subscription required" });
+    return;
+  }
 
   const brief = episode_brief as Record<string, unknown>;
 
@@ -348,13 +359,25 @@ router.post("/generate", async (req, res): Promise<void> => {
     if (insertError) {
       req.log.warn({ error: insertError.message }, "Failed to insert episode_run");
     } else {
-      // Increment monthly run count
-      const { error: rpcError } = await supabaseAdmin.rpc(
-        "increment_run_count",
-        { p_user_id: user_id }
-      );
-      if (rpcError) {
-        req.log.warn({ error: rpcError.message }, "Failed to increment run count");
+      // Reset or increment monthly run count
+      const p = profile as Profile | null;
+      const resetDate = p?.run_count_reset_at ? new Date(p.run_count_reset_at) : null;
+      const now = new Date();
+      const needsReset =
+        !resetDate ||
+        resetDate.getMonth() !== now.getMonth() ||
+        resetDate.getFullYear() !== now.getFullYear();
+
+      if (needsReset) {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ run_count_this_month: 1, run_count_reset_at: now.toISOString() })
+          .eq("id", user_id);
+      } else {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ run_count_this_month: (p?.run_count_this_month ?? 0) + 1 })
+          .eq("id", user_id);
       }
     }
   } catch (dbErr) {
