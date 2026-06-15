@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [success, setSuccess] = useState(false);
+  const [, setLocation] = useLocation();
 
   const validate = () => {
     const errors: Record<string, string> = {};
@@ -63,7 +63,7 @@ export default function SignupPage() {
     if (signUpError) {
       setError(signUpError.message);
     } else {
-      setSuccess(true);
+      setLocation("/dashboard");
     }
   };
 
@@ -80,12 +80,7 @@ export default function SignupPage() {
           <h1 className="font-serif font-light text-[28px] text-foreground mb-2">Create your account</h1>
           <p className="text-[14px] text-muted-foreground mb-6">7-day free trial. No credit card required.</p>
 
-          {success ? (
-            <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-[14px] leading-relaxed">
-              Check your email to confirm your account — then come back to sign in.
-            </div>
-          ) : (
-            <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First name</Label>
                 <Input
@@ -156,7 +151,6 @@ export default function SignupPage() {
                 {loading ? "Creating account…" : "Create my account →"}
               </Button>
             </form>
-          )}
 
           <div className="mt-6 text-center text-[13px] text-muted-foreground">
             Already have an account?{" "}
