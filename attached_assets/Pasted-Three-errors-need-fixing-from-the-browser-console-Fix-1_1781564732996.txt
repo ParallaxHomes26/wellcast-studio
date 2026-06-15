@@ -1,0 +1,51 @@
+Three errors need fixing from the browser console:
+Fix 1 — 413 Request Entity Too Large on /api/extract
+
+The transcript being sent is too large for the server's default body size limit. In the backend Express server increase the body size limit:
+javascriptapp.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
+Find where the Express server is initialized and add these two lines immediately after const app = express().
+Also in the extraction handler — truncate the transcript to the first 15000 characters before sending to Anthropic:
+javascriptconst truncatedTranscript = transcript.substring(0, 15000)
+Fix 2 — Profile fetch permission denied (RLS 42501)
+
+The profiles RLS policy is still blocking reads for authenticated users. Run this SQL in Supabase:
+sqlDROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+
+CREATE POLICY "Users can view own profile"
+ON profiles FOR SELECT
+TO authenticated
+USING (auth.uid() = id);
+The key addition is TO authenticated — this explicitly grants the policy to authenticated users only.
+Also in useProfile.ts — the profile is fetching before the session is fully established. Add a delay or check:
+javascriptconst { data: { session }, error: sessionError } = await supabase.auth.getSession()
+console.log('Session:', session?.user?.id)
+
+if (!session?.user?.id) {
+  console.log('No session found')
+  return
+}
+
+const { data: profile, error } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', session.user.id)
+  .single()
+
+console.log('Profile result:', profile)
+console.log('Profile error:', error)
+Fix 3 — For now make useProfile.ts fail gracefully
+
+If the profile fetch fails don't crash — return a default profile that allows generation:
+javascriptif (error || !profile) {
+  console.error('Profile fetch failed:', error)
+  // Return permissive default so user isn't blocked
+  setProfile({
+    id: session.user.id,
+    email: session.user.email,
+    subscription_status: 'trialing',
+    trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  })
+  return
+}
+List every file changed.

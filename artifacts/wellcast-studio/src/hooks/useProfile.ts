@@ -24,23 +24,34 @@ export function useProfile(): UseProfileResult {
     }
     setLoading(true);
     setError(null);
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log("Session user ID:", session?.user?.id);
+
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log("Session:", session?.user?.id);
+
+    if (sessionError || !session?.user?.id) {
+      console.log("No session found");
+      setLoading(false);
+      return;
+    }
 
     const { data, error: fetchError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", session.user.id)
       .single();
 
     console.log("Profile result:", data);
     console.log("Profile error:", fetchError);
 
-    if (fetchError) {
-      // 403 = RLS blocking fetch; fail open so users aren't incorrectly locked out
-      console.error("Profile fetch failed:", fetchError.message, "code:", fetchError.code);
-      setError(fetchError.message);
-      // Leave profile as null — getSubscriptionTier(null) defaults to trialing
+    if (fetchError || !data) {
+      console.error("Profile fetch failed:", fetchError);
+      // Return permissive default so user isn't blocked
+      setProfile({
+        id: session.user.id,
+        email: session.user.email ?? undefined,
+        subscription_status: "trialing",
+        trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      });
     } else {
       setProfile(data as Profile);
     }

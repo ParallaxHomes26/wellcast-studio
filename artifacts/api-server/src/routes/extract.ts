@@ -56,7 +56,7 @@ router.post("/extract", async (req, res): Promise<void> => {
       res.status(400).json({ error: "transcript is required for input_method=transcript" });
       return;
     }
-    content = transcript;
+    content = transcript.substring(0, 15000);
   } else if (input_method === "manual") {
     if (!manual_brief) {
       res.status(400).json({ error: "manual_brief is required for input_method=manual" });
