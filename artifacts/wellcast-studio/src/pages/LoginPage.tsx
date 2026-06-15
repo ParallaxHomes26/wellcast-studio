@@ -33,13 +33,13 @@ export default function LoginPage() {
       <div className="w-full max-w-[440px]">
         <div className="text-center mb-8">
           <a href="/">
-            <img src="/wellcast-logo.png" alt="Wellcast" style={{ height: "48px", width: "auto", display: "inline-block" }} />
+            <img src="/wellcast-logo.png" alt="Wellcast" style={{ height: "72px", width: "auto", display: "inline-block" }} />
           </a>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
           <h1 className="font-serif font-light text-[28px] text-foreground mb-2">Welcome back</h1>
-          <p className="text-[14px] text-muted-foreground mb-6">Sign in to your Wellcast Studio account</p>
+          <p className="text-[14px] text-muted-foreground mb-6">Sign in to your Wellcast account</p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">

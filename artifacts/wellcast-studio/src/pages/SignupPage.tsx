@@ -74,7 +74,7 @@ export default function SignupPage() {
       <div className="w-full max-w-[440px]">
         <div className="text-center mb-8">
           <a href="/">
-            <img src="/wellcast-logo.png" alt="Wellcast" style={{ height: "48px", width: "auto", display: "inline-block" }} />
+            <img src="/wellcast-logo.png" alt="Wellcast" style={{ height: "72px", width: "auto", display: "inline-block" }} />
           </a>
         </div>
 
