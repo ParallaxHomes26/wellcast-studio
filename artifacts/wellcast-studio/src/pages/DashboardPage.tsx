@@ -3,40 +3,36 @@ import { Link } from "wouter";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, FileAudio } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/lib/supabase";
 
 interface EpisodeRun {
   id: string;
   episode_title: string;
   health_niche: string;
+  episode_type: string;
   created_at: string;
   status: string;
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const { profile } = useProfile();
   const [runs, setRuns] = useState<EpisodeRun[]>([]);
   const [runsLoading, setRunsLoading] = useState(true);
 
-  // Suppress unused warning — profile kept for future subscription gating
-  void profile;
-
   useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("episode_runs")
-      .select("id, episode_title, health_niche, created_at, status")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        setRuns((data as EpisodeRun[]) ?? []);
-        setRunsLoading(false);
-      });
-  }, [user]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user?.id) { setRunsLoading(false); return; }
+      supabase
+        .from("episode_runs")
+        .select("id, episode_title, health_niche, episode_type, created_at, status")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(10)
+        .then(({ data }) => {
+          setRuns((data as EpisodeRun[]) ?? []);
+          setRunsLoading(false);
+        });
+    });
+  }, []);
 
   return (
     <DashboardLayout>
@@ -82,11 +78,16 @@ export default function DashboardPage() {
               {runs.map((run) => (
                 <Link key={run.id} href={`/run/${run.id}`}>
                   <div className="bg-card border border-border rounded-xl px-5 py-4 hover:border-accent/40 transition-colors cursor-pointer flex items-center justify-between">
-                    <div>
-                      <p className="text-[15px] font-medium text-foreground">{run.episode_title}</p>
+                    <div className="min-w-0 mr-4">
+                      <p className="text-[15px] font-medium text-foreground">
+                        {run.episode_title.length > 60 ? run.episode_title.slice(0, 60) + "…" : run.episode_title}
+                      </p>
                       <p className="text-[13px] text-muted-foreground mt-0.5">{run.health_niche}</p>
                     </div>
-                    <div className="text-right shrink-0 ml-4">
+                    <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
+                      <span className="inline-block text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                        Complete
+                      </span>
                       <p className="text-[12px] text-muted-foreground">
                         {new Date(run.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>

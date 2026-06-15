@@ -73,9 +73,9 @@ export default function SignupPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-[440px]">
         <div className="text-center mb-8">
-          <Link href="/" className="font-medium text-[17px] text-foreground tracking-tight inline-block hover:opacity-80 transition-opacity">
-            Wellcast Studio
-          </Link>
+          <a href="/">
+            <img src="/wellcast-logo.png" alt="Wellcast" style={{ height: "48px", width: "auto", display: "inline-block" }} />
+          </a>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">

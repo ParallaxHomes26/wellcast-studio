@@ -80,7 +80,7 @@ function AssetSection({
   };
 
   return (
-    <div className="py-5 border-b border-border last:border-0 group">
+    <div className="py-5 border-b border-border last:border-0">
       <div className="flex items-center justify-between mb-3">
         <span
           className="text-[11px] font-bold uppercase tracking-[0.1em]"
@@ -91,12 +91,20 @@ function AssetSection({
         <button
           onClick={handleCopy}
           title="Copy to clipboard"
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground print:hidden"
+          className="print:hidden flex items-center gap-[5px] text-[11px] transition-all"
+          style={{
+            padding: "4px 10px",
+            border: "0.5px solid #DADCD9",
+            borderRadius: "6px",
+            background: copied ? "#526056" : "white",
+            color: copied ? "white" : "#897866",
+            cursor: "pointer",
+          }}
         >
           {copied ? (
-            <Check className="h-4 w-4 text-green-600" />
+            <><Check className="h-3 w-3" /> Copied</>
           ) : (
-            <Copy className="h-4 w-4" />
+            <><Copy className="h-3 w-3" /> Copy</>
           )}
         </button>
       </div>

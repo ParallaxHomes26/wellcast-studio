@@ -1,0 +1,63 @@
+This is looking incredible. The output screen is clean, professional, and the content quality is excellent — look at those SEO title variations for the home birth episode. That's genuinely useful output.
+I can also see Episode History is in the sidebar and the run is showing in the left panel with the title and Complete badge. That's already working.
+Now let me write the combined prompt for the remaining UI items:
+
+Tell Replit's agent:
+
+Please make these three focused changes:
+1. Add logo to login and signup pages
+In artifacts/wellcast-studio/src/pages/LoginPage.tsx and artifacts/wellcast-studio/src/pages/SignupPage.tsx:
+Replace any text that says "Wellcast" or "Wellcast Studio" at the top of each page with the logo image:
+tsx<div style={{ textAlign: 'center', marginBottom: '32px' }}>
+  <a href="/">
+    <img 
+      src="/wellcast-logo.png" 
+      alt="Wellcast" 
+      style={{ height: '48px', width: 'auto' }} 
+    />
+  </a>
+</div>
+2. Add copy buttons to every asset on the output screen
+In artifacts/wellcast-studio/src/pages/RunDetailPage.tsx — for every asset section add a copy button in the top right corner of each asset block:
+tsxconst copyToClipboard = async (text: string, label: string) => {
+  await navigator.clipboard.writeText(text)
+  // Show brief "Copied!" toast for 2 seconds
+  setCopiedLabel(label)
+  setTimeout(() => setCopiedLabel(null), 2000)
+}
+Add a useState<string | null>(null) for copiedLabel at the top of the component.
+Each asset section header should have a copy button on the right:
+tsx<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+  <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.09em', textTransform: 'uppercase', color: '#897866' }}>
+    {assetLabel}
+  </span>
+  <button
+    onClick={() => copyToClipboard(assetContent, assetLabel)}
+    style={{
+      display: 'flex', alignItems: 'center', gap: '5px',
+      padding: '4px 10px', border: '0.5px solid #DADCD9',
+      borderRadius: '6px', background: copiedLabel === assetLabel ? '#526056' : 'white',
+      color: copiedLabel === assetLabel ? 'white' : '#897866',
+      fontSize: '11px', cursor: 'pointer', transition: 'all 0.15s'
+    }}
+  >
+    {copiedLabel === assetLabel ? '✓ Copied' : 'Copy'}
+  </button>
+</div>
+Apply this pattern to every asset section across all six category tabs.
+3. Fix episode history on dashboard
+In artifacts/wellcast-studio/src/pages/DashboardPage.tsx make sure the Recent Episodes section:
+
+Fetches the last 10 episode runs from Supabase for the current user ordered by created_at descending
+Displays each run as a clickable card showing: episode title (truncated to 60 chars), health niche, date created, Complete badge
+Clicking a run card navigates to /run/${run.id}
+Empty state shows "No runs yet. Start your first episode run." with a Start button
+
+The fetch should be:
+javascriptconst { data: runs } = await supabase
+  .from('episode_runs')
+  .select('id, episode_title, health_niche, episode_type, status, created_at')
+  .eq('user_id', session.user.id)
+  .order('created_at', { ascending: false })
+  .limit(10)
+List every file changed.
