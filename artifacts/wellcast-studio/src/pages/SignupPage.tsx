@@ -34,13 +34,29 @@ export default function SignupPage() {
 
     setLoading(true);
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { first_name: firstName },
       },
     });
+
+    if (!signUpError && authData.user) {
+      const now = new Date();
+      const trialEnd = new Date(now);
+      trialEnd.setDate(trialEnd.getDate() + 7);
+
+      await supabase.from("profiles").upsert({
+        id: authData.user.id,
+        email: authData.user.email,
+        full_name: firstName,
+        subscription_status: "trialing",
+        trial_ends_at: trialEnd.toISOString(),
+        run_count_this_month: 0,
+        run_count_reset_at: now.toISOString(),
+      }, { onConflict: "id" });
+    }
 
     setLoading(false);
 

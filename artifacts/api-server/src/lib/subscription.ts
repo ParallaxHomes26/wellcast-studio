@@ -25,8 +25,9 @@ export interface Profile {
 export function getSubscriptionTier(profile: Profile | null): SubscriptionTier {
   if (!profile) return "expired";
 
-  if (profile.subscription_status === "trialing") {
-    if (!profile.trial_ends_at) return "trialing";
+  // Null/missing status → treat as trialing (new accounts before trigger fires)
+  if (!profile.subscription_status || profile.subscription_status === "trialing") {
+    if (!profile.trial_ends_at) return "trialing"; // no end date = grace period
     const trialEnd = new Date(profile.trial_ends_at);
     return trialEnd > new Date() ? "trialing" : "expired";
   }

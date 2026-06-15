@@ -1,0 +1,78 @@
+That means the profile row isn't being created correctly on signup — so the trial_starts_at and trial_ends_at fields are null or missing, and the subscription check is defaulting to "expired."
+Two things to check and fix. Tell Replit's agent:
+
+New user accounts are showing "trial has ended" immediately after signup. This means the profile row is either not being created on signup or the trial dates are not being set correctly.
+Please fix this in two steps:
+Step 1 — Check the Supabase trigger
+
+The handle_new_user trigger we created should automatically insert a profile row with trial dates when a new user signs up. Check if this trigger is firing correctly by looking at what happens after signup.
+Step 2 — Fix the profile creation in the signup flow
+
+In the signup function, after supabase.auth.signUp() succeeds, manually create the profile row as a fallback in case the trigger isn't firing:
+javascriptconst { data: authData, error: signUpError } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    data: { first_name: firstName }
+  }
+})
+
+if (authData.user && !signUpError) {
+  // Manually create profile as fallback
+  const trialStart = new Date()
+  const trialEnd = new Date()
+  trialEnd.setDate(trialEnd.getDate() + 7)
+  
+  await supabase.from('profiles').upsert({
+    id: authData.user.id,
+    email: authData.user.email,
+    first_name: firstName,
+    subscription_tier: 'free_trial',
+    subscription_status: 'trialing',
+    trial_starts_at: trialStart.toISOString(),
+    trial_ends_at: trialEnd.toISOString(),
+    run_count_this_month: 0,
+    run_count_reset_at: trialStart.toISOString()
+  }, { onConflict: 'id' })
+}
+Step 3 — Fix the subscription check
+
+In subscription.ts or wherever canRunGeneration is defined, update the logic so that if trial_ends_at is null or missing it defaults to allowing access rather than blocking it:
+javascriptexport function getSubscriptionTier(profile: any): SubscriptionTier {
+  if (!profile) return 'expired'
+  
+  // If no subscription status set, treat as trialing
+  if (!profile.subscription_status || profile.subscription_status === 'trialing') {
+    // If trial_ends_at is null, give them 7 days from now as grace period
+    if (!profile.trial_ends_at) return 'trialing'
+    
+    const trialEnd = new Date(profile.trial_ends_at)
+    if (trialEnd > new Date()) return 'trialing'
+    else return 'expired'
+  }
+  
+  // Rest of existing logic...
+}
+Step 4 — Fix the existing test account
+
+Run this SQL in Supabase SQL editor to fix the current test account:
+sqlUPDATE profiles 
+SET 
+  subscription_status = 'trialing',
+  subscription_tier = 'free_trial',
+  trial_starts_at = now(),
+  trial_ends_at = now() + interval '7 days',
+  run_count_this_month = 0,
+  run_count_reset_at = now()
+WHERE email = 'hello@audreyrunley.com';
+
+Also go to Supabase SQL editor right now and run this to fix your own account immediately:
+sqlUPDATE profiles 
+SET 
+  subscription_status = 'trialing',
+  subscription_tier = 'free_trial',
+  trial_starts_at = now(),
+  trial_ends_at = now() + interval '7 days',
+  run_count_this_month = 0,
+  run_count_reset_at = now()
+WHERE id = 'cef4d8b7-68e4-4a16-bb40-9ec93fd50f30';
