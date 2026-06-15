@@ -180,12 +180,39 @@ export default function LandingPage() {
                 Simple pricing
               </span>
               <h2 className="font-serif font-light text-[36px] text-foreground mb-3">
-                Start free. Scale as you grow.
+                Get started today for $19/month — or scale up as you grow.
               </h2>
               <p className="text-[15px]" style={{ color: "#526056" }}>No contracts. Cancel anytime.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+              {/* Basic */}
+              <div className="bg-card border border-border rounded-xl p-8 flex flex-col">
+                <div className="mb-6">
+                  <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">Basic</p>
+                  <div className="flex items-baseline gap-1 mb-3">
+                    <span className="font-serif font-light text-[44px] text-foreground leading-none">$19</span>
+                    <span className="text-[14px] text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-[14px] text-muted-foreground leading-relaxed">Perfect for podcasters just getting started</p>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {["2 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Email support"].map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-[14px] text-foreground">
+                      <Check size={14} className="shrink-0 mt-0.5" style={{ color: "#526056" }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  data-testid="button-basic-trial"
+                  className="w-full py-3 rounded-lg border text-[14px] font-medium transition-colors"
+                  style={{ borderColor: "#526056", color: "#526056" }}
+                >
+                  Start 7-day free trial
+                </button>
+              </div>
+
               {/* Starter */}
               <div className="bg-card border border-border rounded-xl p-8 flex flex-col">
                 <div className="mb-6">
@@ -194,7 +221,7 @@ export default function LandingPage() {
                     <span className="font-serif font-light text-[44px] text-foreground leading-none">$37</span>
                     <span className="text-[14px] text-muted-foreground">/month</span>
                   </div>
-                  <p className="text-[14px] text-muted-foreground leading-relaxed">Perfect for podcasters publishing consistently</p>
+                  <p className="text-[14px] text-muted-foreground leading-relaxed">For podcasters publishing consistently</p>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {["4 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Email support"].map((f) => (
@@ -300,6 +327,9 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+            <p className="text-center mt-8 text-[13px]" style={{ color: "#897866" }}>
+              All plans include a 7-day free trial. No credit card required.
+            </p>
           </div>
         </section>
       </main>
