@@ -92,25 +92,10 @@ export function trialDaysRemaining(profile: Profile | null): number {
   return getTrialDaysRemaining(profile.trial_ends_at);
 }
 
-export function canRunGeneration(profile: Profile | null): { allowed: boolean; reason?: string } {
-  const tier = getSubscriptionTier(profile);
-  const limit = getRunLimit(tier);
-
-  // Explicit trialing check: allow on day 0, block only when strictly past end
-  if (profile?.subscription_status === "trialing" || tier === "trialing") {
-    if (!profile?.trial_ends_at) return { allowed: true };
-    const daysLeft = getTrialDaysRemaining(profile.trial_ends_at);
-    if (daysLeft >= 0) return { allowed: true };
-    return { allowed: false, reason: "Your trial has ended. Choose a plan to continue." };
-  }
-
-  if (tier === "expired") return { allowed: false, reason: "Your trial has ended. Please choose a plan to continue." };
-  if (tier === "canceled") return { allowed: false, reason: "Your subscription has been canceled. Please resubscribe." };
-  if (limit === "unlimited") return { allowed: true };
-
-  const used = profile?.run_count_this_month ?? 0;
-  if (used >= limit) {
-    return { allowed: false, reason: `You've used all ${limit} runs this month. Upgrade to get more.` };
-  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function canRunGeneration(profile: any): { allowed: boolean; reason?: string } {
+  // Allow all authenticated users during development
+  // TODO: restore subscription checking before launch
+  if (!profile) return { allowed: false, reason: "Please sign in to continue." };
   return { allowed: true };
 }

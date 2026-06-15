@@ -8,7 +8,6 @@ import { useProfile } from "@/hooks/useProfile";
 import {
   getSubscriptionTier,
   tierLabel,
-  trialDaysRemaining,
   getRunLimit,
 } from "@/lib/subscription";
 import { supabase } from "@/lib/supabase";
@@ -50,7 +49,14 @@ export default function DashboardPage() {
   const [runsLoading, setRunsLoading] = useState(true);
 
   const tier = getSubscriptionTier(profile);
-  const daysLeft = trialDaysRemaining(profile);
+  const daysLeft = (() => {
+    if (!profile?.trial_ends_at) return 0;
+    const trialEnd = new Date(profile.trial_ends_at);
+    const now = new Date();
+    const msLeft = trialEnd.getTime() - now.getTime();
+    const days = Math.ceil(msLeft / 86400000);
+    return days < 0 ? 0 : days;
+  })();
   const runLimit = getRunLimit(tier);
   const runsUsed = profile?.run_count_this_month ?? 0;
   const limitReached = runLimit !== "unlimited" && runsUsed >= (runLimit as number);
