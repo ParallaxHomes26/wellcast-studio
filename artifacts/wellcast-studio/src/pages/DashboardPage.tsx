@@ -15,23 +15,30 @@ interface EpisodeRun {
 }
 
 export default function DashboardPage() {
-  const [runs, setRuns] = useState<EpisodeRun[]>([]);
+  const [recentRuns, setRecentRuns] = useState<EpisodeRun[]>([]);
   const [runsLoading, setRunsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user?.id) { setRunsLoading(false); return; }
-      supabase
+    const fetchRuns = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        setRunsLoading(false);
+        return;
+      }
+
+      const { data: runs, error } = await supabase
         .from("episode_runs")
-        .select("id, episode_title, health_niche, episode_type, created_at, status")
+        .select("id, episode_title, health_niche, episode_type, status, created_at")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
-        .limit(10)
-        .then(({ data }) => {
-          setRuns((data as EpisodeRun[]) ?? []);
-          setRunsLoading(false);
-        });
-    });
+        .limit(10);
+
+      if (runs) setRecentRuns(runs as EpisodeRun[]);
+      if (error) console.error("Runs fetch error:", error.message);
+      setRunsLoading(false);
+    };
+
+    fetchRuns();
   }, []);
 
   return (
@@ -58,7 +65,7 @@ export default function DashboardPage() {
                 <div key={i} className="h-16 bg-card border border-border rounded-xl animate-pulse" />
               ))}
             </div>
-          ) : runs.length === 0 ? (
+          ) : recentRuns.length === 0 ? (
             <div className="bg-card border border-border rounded-xl p-12 flex flex-col items-center justify-center text-center shadow-sm">
               <div className="h-12 w-12 rounded-full bg-secondary/30 flex items-center justify-center mb-4">
                 <FileAudio className="h-6 w-6 text-muted-foreground" />
@@ -75,12 +82,14 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {runs.map((run) => (
+              {recentRuns.map((run) => (
                 <Link key={run.id} href={`/run/${run.id}`}>
                   <div className="bg-card border border-border rounded-xl px-5 py-4 hover:border-accent/40 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="min-w-0 mr-4">
                       <p className="text-[15px] font-medium text-foreground">
-                        {run.episode_title.length > 60 ? run.episode_title.slice(0, 60) + "…" : run.episode_title}
+                        {run.episode_title.length > 60
+                          ? run.episode_title.slice(0, 60) + "…"
+                          : run.episode_title}
                       </p>
                       <p className="text-[13px] text-muted-foreground mt-0.5">{run.health_niche}</p>
                     </div>
@@ -89,7 +98,11 @@ export default function DashboardPage() {
                         Complete
                       </span>
                       <p className="text-[12px] text-muted-foreground">
-                        {new Date(run.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        {new Date(run.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
                   </div>
