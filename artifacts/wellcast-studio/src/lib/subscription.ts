@@ -79,15 +79,30 @@ export function tierLabel(tier: SubscriptionTier): string {
   }
 }
 
+function getTrialDaysRemaining(trialEndsAt: string): number {
+  const now = new Date();
+  const trialEnd = new Date(trialEndsAt);
+  const diffMs = trialEnd.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return Math.max(0, diffDays);
+}
+
 export function trialDaysRemaining(profile: Profile | null): number {
   if (!profile?.trial_ends_at) return 0;
-  const diff = new Date(profile.trial_ends_at).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  return getTrialDaysRemaining(profile.trial_ends_at);
 }
 
 export function canRunGeneration(profile: Profile | null): { allowed: boolean; reason?: string } {
   const tier = getSubscriptionTier(profile);
   const limit = getRunLimit(tier);
+
+  // Explicit trialing check: allow on day 0, block only when strictly past end
+  if (profile?.subscription_status === "trialing" || tier === "trialing") {
+    if (!profile?.trial_ends_at) return { allowed: true };
+    const daysLeft = getTrialDaysRemaining(profile.trial_ends_at);
+    if (daysLeft >= 0) return { allowed: true };
+    return { allowed: false, reason: "Your trial has ended. Choose a plan to continue." };
+  }
 
   if (tier === "expired") return { allowed: false, reason: "Your trial has ended. Please choose a plan to continue." };
   if (tier === "canceled") return { allowed: false, reason: "Your subscription has been canceled. Please resubscribe." };
