@@ -41,9 +41,6 @@ interface PlanConfig {
   cta: string;
   featured?: boolean;
   badge?: string;
-  badgeNote?: string;
-  isWaitlist?: boolean;
-  isFoundingMember?: boolean;
 }
 
 const PLANS: PlanConfig[] = [
@@ -93,25 +90,7 @@ const PLANS: PlanConfig[] = [
     featured: true,
     badge: "Most popular",
   },
-  {
-    key: "founding",
-    label: "Founding Member",
-    description: "Pro features at Starter pricing — for founding members only",
-    features: [
-      "Everything in Pro",
-      "Price locked for life",
-      "Founding member badge",
-      "Early access to all new features",
-    ],
-    cta: "Join the waitlist →",
-    badge: "50 spots only",
-    badgeNote: "Available to waitlist members before public launch",
-    isWaitlist: true,
-    isFoundingMember: true,
-  },
 ];
-
-const FOUNDING_PRICE_ID = "price_1Ticck2Zpe8a4y2MUYLPrHGI";
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
@@ -119,7 +98,7 @@ export default function PricingPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const handleCheckout = async (priceId: string, isFoundingMember = false) => {
+  const handleCheckout = async (priceId: string) => {
     if (!user) {
       setLocation("/signup");
       return;
@@ -129,7 +108,7 @@ export default function PricingPage() {
       const res = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.id, price_id: priceId, is_founding_member: isFoundingMember }),
+        body: JSON.stringify({ user_id: user.id, price_id: priceId }),
       });
       const data = await res.json() as { url?: string; error?: string };
       if (data.url) window.location.href = data.url;
@@ -262,16 +241,14 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing grid */}
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="max-w-[900px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5">
           {PLANS.map((plan) => {
             const isFeatured = !!plan.featured;
 
             // Resolve current pricing tier
             const tierData = pricing[plan.key];
             const currentPricing = tierData ? tierData[billingPeriod] : null;
-            const priceId = plan.isFoundingMember
-              ? FOUNDING_PRICE_ID
-              : currentPricing?.priceId ?? "";
+            const priceId = currentPricing?.priceId ?? "";
 
             return (
               <div key={plan.label} className="relative flex flex-col">
@@ -302,24 +279,7 @@ export default function PricingPage() {
                     </p>
 
                     {/* Price display */}
-                    {plan.isFoundingMember ? (
-                      <div>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "8px" }}>
-                          <span
-                            style={{
-                              fontSize: "42px",
-                              fontFamily: "Georgia, serif",
-                              fontWeight: 300,
-                              color: "#363633",
-                              lineHeight: 1,
-                            }}
-                          >
-                            $37
-                          </span>
-                          <span style={{ fontSize: "14px", color: "#897866" }}>/month locked forever</span>
-                        </div>
-                      </div>
-                    ) : currentPricing ? (
+                    {currentPricing ? (
                       <div style={{ marginBottom: "8px" }}>
                         <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
                           <span
@@ -391,26 +351,17 @@ export default function PricingPage() {
 
                   <div>
                     <button
-                      onClick={() =>
-                        plan.isWaitlist
-                          ? window.open("https://getwellcast.com/waitlist", "_blank")
-                          : handleCheckout(priceId, plan.isFoundingMember)
-                      }
+                      onClick={() => handleCheckout(priceId)}
                       disabled={loading === priceId}
                       className="w-full py-3 rounded-lg text-[14px] font-medium transition-colors disabled:opacity-60"
                       style={
-                        isFeatured || plan.isWaitlist
+                        isFeatured
                           ? { background: "#526056", color: "#fff", border: "none" }
                           : { border: "1px solid #526056", color: "#526056", background: "transparent" }
                       }
                     >
                       {loading === priceId ? "Loading…" : plan.cta}
                     </button>
-                    {plan.badgeNote && (
-                      <p className="text-[12px] text-muted-foreground text-center mt-2">
-                        {plan.badgeNote}
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>

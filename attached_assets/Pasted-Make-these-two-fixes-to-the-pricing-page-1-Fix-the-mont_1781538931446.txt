@@ -1,0 +1,90 @@
+Make these two fixes to the pricing page:
+1. Fix the monthly/annual toggle — it's not rendering
+The pricing page needs 'use client' as the very first line of the file. Check if it's there — if not add it now.
+Then make sure the toggle JSX is actually placed in the rendered output between the subtitle and the pricing cards. If useState is imported but the toggle JSX is missing from the return statement, add it now using this exact structure:
+tsx'use client'
+
+import { useState } from 'react'
+
+export default function PricingPage() {
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
+  
+  return (
+    <div>
+      {/* Page header */}
+      
+      {/* Toggle — must be here, between header and cards */}
+      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div style={{
+          display: 'inline-flex',
+          background: '#F0EFE9',
+          borderRadius: '30px',
+          padding: '4px',
+          border: '0.5px solid #DADCD9'
+        }}>
+          <button
+            onClick={() => setBillingPeriod('monthly')}
+            style={{
+              padding: '8px 24px',
+              borderRadius: '26px',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: billingPeriod === 'monthly' ? '500' : '400',
+              background: billingPeriod === 'monthly' ? 'white' : 'transparent',
+              color: billingPeriod === 'monthly' ? '#363633' : '#897866',
+              cursor: 'pointer',
+              boxShadow: billingPeriod === 'monthly' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.15s'
+            }}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setBillingPeriod('annual')}
+            style={{
+              padding: '8px 24px',
+              borderRadius: '26px',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: billingPeriod === 'annual' ? '500' : '400',
+              background: billingPeriod === 'annual' ? 'white' : 'transparent',
+              color: billingPeriod === 'annual' ? '#363633' : '#897866',
+              cursor: 'pointer',
+              boxShadow: billingPeriod === 'annual' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.15s'
+            }}
+          >
+            Annual
+            <span style={{
+              marginLeft: '6px',
+              fontSize: '11px',
+              background: '#526056',
+              color: 'white',
+              borderRadius: '10px',
+              padding: '2px 8px'
+            }}>
+              Save 30%+
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Pricing cards — driven by billingPeriod state */}
+      
+    </div>
+  )
+}
+Make sure all three pricing cards (Basic, Starter, Pro) read from the billingPeriod state and display the correct price and priceId accordingly.
+2. Fix the headline line break
+Find this headline text:
+
+"Get started today for $19/month — or scale up as you grow."
+Replace with two lines using a line break:
+tsx<h2>
+  Get started today for $19/month —<br />
+  or scale up as you grow.
+</h2>
+This forces "or scale up as you grow." onto its own line for better visual balance.
+3. While you're at it — remove the Founding Member card
+
+The pricing page should show only three cards: Basic, Starter, Pro. Remove the Founding Member card entirely — that offer lives in the waitlist email sequence only.

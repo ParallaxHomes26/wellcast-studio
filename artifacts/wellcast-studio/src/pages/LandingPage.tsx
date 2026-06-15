@@ -180,7 +180,8 @@ export default function LandingPage() {
                 Simple pricing
               </span>
               <h2 className="font-serif font-light text-[36px] text-foreground mb-3">
-                Get started today for $19/month — or scale up as you grow.
+                Get started today for $19/month —<br />
+                or scale up as you grow.
               </h2>
               <p className="text-[15px]" style={{ color: "#526056" }}>No contracts. Cancel anytime.</p>
             </div>
