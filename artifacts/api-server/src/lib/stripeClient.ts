@@ -2,13 +2,13 @@ import Stripe from "stripe";
 import { logger } from "./logger";
 
 export const PRICE_IDS = {
-  BASIC_MONTHLY:    "price_1TibHO2Zpe8a4y2MgNN4wVrI",
-  STARTER_MONTHLY:  "price_1TibHw2Zpe8a4y2MouaBgTQW",
-  PRO_MONTHLY:      "price_1TibIO2Zpe8a4y2MW1yIg27S",
-  FOUNDING_MEMBER:  "price_1TibKD2Zpe8a4y2MLI3ii0KD",
-  BASIC_ANNUAL:     "price_1TibL22Zpe8a4y2MWJx4WYFY",
-  STARTER_ANNUAL:   "price_1TibLg2Zpe8a4y2M2MWuaYjV",
-  PRO_ANNUAL:       "price_1TibM02Zpe8a4y2MiKl4WaI5",
+  BASIC_MONTHLY:    "price_1Ticc72Zpe8a4y2Maiz2kAz4",
+  STARTER_MONTHLY:  "price_1TiccK2Zpe8a4y2MCuAi0rWt",
+  PRO_MONTHLY:      "price_1TiccX2Zpe8a4y2MUYJntCer",
+  FOUNDING_MEMBER:  "price_1Ticck2Zpe8a4y2MUYLPrHGI",
+  BASIC_ANNUAL:     "price_1TicdX2Zpe8a4y2MFC1Eyahf",
+  STARTER_ANNUAL:   "price_1Ticdn2Zpe8a4y2Mlymy9XFE",
+  PRO_ANNUAL:       "price_1Tice32Zpe8a4y2M6VlwtdKV",
 } as const;
 
 let _stripe: Stripe | null = null;
