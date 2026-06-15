@@ -1,22 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import EpisodeInputBar from "@/components/input/EpisodeInputBar";
 import GeneratingScreen from "@/components/ui/GeneratingScreen";
-import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import type { Session } from "@supabase/supabase-js";
 
 export default function NewRunPage() {
-  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleGenerate = async (
     inputMethod: "transcript" | "details" | "url",
     inputData: Record<string, unknown>,
     cta: string
   ) => {
-    if (!user) return;
+    // Get session fresh at call time
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      setError("Please sign in to continue.");
+      return;
+    }
+
     setError("");
     setGenerating(true);
 
@@ -48,7 +74,7 @@ export default function NewRunPage() {
         body: JSON.stringify({
           episode_brief: brief,
           cta,
-          user_id: user.id,
+          user_id: userId,
           input_method: inputMethod === "details" ? "manual" : inputMethod,
         }),
       });
@@ -82,6 +108,24 @@ export default function NewRunPage() {
   };
 
   if (generating) return <GeneratingScreen />;
+
+  // Wait for auth to initialise before rendering
+  if (authLoading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-[720px] mx-auto">
+          <div className="h-8 w-48 bg-card rounded animate-pulse mb-4" />
+          <div className="h-64 bg-card rounded-xl animate-pulse" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Redirect to login if truly unauthenticated
+  if (!session) {
+    window.location.href = "/login";
+    return null;
+  }
 
   return (
     <DashboardLayout>
