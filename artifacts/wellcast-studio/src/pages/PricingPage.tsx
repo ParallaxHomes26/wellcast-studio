@@ -1,99 +1,40 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-type BillingPeriod = "monthly" | "annual";
-
-interface PricingTier {
-  price: string;
-  period: string;
-  priceId: string;
-  equivalent?: string;
-  savings?: string;
-}
-
-interface PlanPricing {
-  monthly: PricingTier;
-  annual: PricingTier;
-}
-
-const pricing: Record<string, PlanPricing> = {
+const PRICES = {
   basic: {
-    monthly: { price: "$19", period: "/month", priceId: "price_1Ticc72Zpe8a4y2Maiz2kAz4" },
-    annual:  { price: "$157", period: "/year", priceId: "price_1TicdX2Zpe8a4y2MFC1Eyahf", equivalent: "$13/mo", savings: "Save $71 vs monthly" },
+    monthly: { amount: "$19", period: "/month", id: "price_1Ticc72Zpe8a4y2Maiz2kAz4" },
+    annual:  { amount: "$157", period: "/year", id: "price_1TicdX2Zpe8a4y2MFC1Eyahf", equiv: "$13/mo billed annually", savings: "Save $71" },
   },
   starter: {
-    monthly: { price: "$37", period: "/month", priceId: "price_1TiccK2Zpe8a4y2MCuAi0rWt" },
-    annual:  { price: "$297", period: "/year", priceId: "price_1Ticdn2Zpe8a4y2Mlymy9XFE", equivalent: "$25/mo", savings: "Save $147 vs monthly" },
+    monthly: { amount: "$37", period: "/month", id: "price_1TiccK2Zpe8a4y2MCuAi0rWt" },
+    annual:  { amount: "$297", period: "/year", id: "price_1Ticdn2Zpe8a4y2Mlymy9XFE", equiv: "$25/mo billed annually", savings: "Save $147" },
   },
   pro: {
-    monthly: { price: "$57", period: "/month", priceId: "price_1TiccX2Zpe8a4y2MUYJntCer" },
-    annual:  { price: "$497", period: "/year", priceId: "price_1Tice32Zpe8a4y2M6VlwtdKV", equivalent: "$41/mo", savings: "Save $187 vs monthly" },
+    monthly: { amount: "$57", period: "/month", id: "price_1TiccX2Zpe8a4y2MUYJntCer" },
+    annual:  { amount: "$497", period: "/year", id: "price_1Tice32Zpe8a4y2M6VlwtdKV", equiv: "$41/mo billed annually", savings: "Save $187" },
   },
 };
 
-interface PlanConfig {
-  key: string;
-  label: string;
-  description: string;
-  features: string[];
-  cta: string;
-  featured?: boolean;
-  badge?: string;
+function CheckGreen() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}>
+      <path d="M2 7L5.5 10.5L12 4" stroke="#526056" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
-const PLANS: PlanConfig[] = [
-  {
-    key: "basic",
-    label: "Basic",
-    description: "Perfect for podcasters just getting started",
-    features: [
-      "2 episode runs per month",
-      "All 26 assets per run",
-      "SEO optimization",
-      "90-day repurposing calendar",
-      "Email support",
-    ],
-    cta: "Start 7-day free trial",
-  },
-  {
-    key: "starter",
-    label: "Starter",
-    description: "For podcasters publishing consistently",
-    features: [
-      "4 episode runs per month",
-      "All 26 assets per run",
-      "SEO optimization",
-      "90-day repurposing calendar",
-      "Episode Confidence Score",
-      "Email support",
-    ],
-    cta: "Start 7-day free trial",
-  },
-  {
-    key: "pro",
-    label: "Pro",
-    description: "For podcasters serious about growth",
-    features: [
-      "Unlimited episode runs",
-      "All 26 assets per run",
-      "SEO optimization",
-      "90-day repurposing calendar",
-      "Episode Confidence Score",
-      "Clinical Credibility Guard",
-      "Listener Transformation Statement",
-      "Guest share package",
-      "Priority support",
-    ],
-    cta: "Start 7-day free trial",
-    featured: true,
-    badge: "Most popular",
-  },
-];
+function CheckWhite() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}>
+      <path d="M2 7L5.5 10.5L12 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export default function PricingPage() {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [loading, setLoading] = useState<string | null>(null);
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -108,280 +49,204 @@ export default function PricingPage() {
       const res = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.id, price_id: priceId }),
+        body: JSON.stringify({ user_id: user.id, price_id: priceId, is_founding_member: false }),
       });
       const data = await res.json() as { url?: string; error?: string };
       if (data.url) window.location.href = data.url;
-    } catch (err) {
-      console.error("Checkout failed:", err);
+      else alert("Something went wrong. Please try again.");
+    } catch {
+      alert("Something went wrong. Please try again.");
     } finally {
       setLoading(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div style={{ minHeight: "100vh", background: "#F3F2EE", fontFamily: "system-ui, sans-serif" }}>
+
       {/* Header */}
-      <header
-        className="sticky top-0 z-50 bg-background px-6 py-4 flex items-center justify-between"
-        style={{ borderBottom: "none", boxShadow: "none", border: "none" }}
-      >
-        <Link href="/">
-          <img
-            src="/wellcast-logo.png"
-            alt="Wellcast Studio"
-            style={{ height: "80px", width: "auto" }}
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-          />
+      <header style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "0.5px solid #DADCD9" }}>
+        <Link href="/" style={{ textDecoration: "none" }}>
+          <img src="/wellcast-logo.png" alt="Wellcast" style={{ height: "80px", width: "auto" }} />
         </Link>
-        <div className="flex items-center gap-4">
+        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           {user ? (
-            <Link href="/dashboard">
-              <span className="text-[14px] text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer">
-                Dashboard
-              </span>
-            </Link>
+            <Link href="/dashboard" style={{ fontSize: "14px", color: "#897866", textDecoration: "none" }}>Dashboard</Link>
           ) : (
             <>
-              <Link href="/login">
-                <span className="text-[14px] text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer">
-                  Sign in
-                </span>
-              </Link>
-              <Link href="/signup">
-                <button
-                  className="px-4 py-2 rounded-full text-white text-[14px] font-medium"
-                  style={{ background: "#526056" }}
-                >
-                  Start free — 7 days
-                </button>
+              <Link href="/login" style={{ fontSize: "14px", color: "#897866", textDecoration: "none" }}>Sign in</Link>
+              <Link href="/signup" style={{ fontSize: "14px", background: "#526056", color: "white", padding: "8px 18px", borderRadius: "20px", textDecoration: "none" }}>
+                Start free — 7 days
               </Link>
             </>
           )}
         </div>
       </header>
 
-      <main className="px-6 py-16">
-        {/* Title */}
-        <div className="text-center mb-4">
-          <span
-            className="uppercase tracking-[0.1em] text-[11px] font-semibold mb-4 block"
-            style={{ color: "#526056" }}
-          >
-            Simple pricing
-          </span>
-          <h1 className="font-serif font-light text-[42px] text-foreground mb-4">
-            Simple pricing for serious podcasters
-          </h1>
-          <p className="text-[16px] text-muted-foreground mb-8">
-            Start free for 7 days. No credit card required.
-          </p>
-        </div>
+      {/* Page content */}
+      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "64px 24px" }}>
+
+        {/* Eyebrow */}
+        <p style={{ textAlign: "center", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#897866", marginBottom: "12px" }}>
+          Simple pricing
+        </p>
+
+        {/* Headline */}
+        <h1 style={{ textAlign: "center", fontFamily: "Georgia, serif", fontWeight: 300, fontSize: "42px", color: "#363633", lineHeight: 1.2, marginBottom: "12px" }}>
+          Get started today for $19/month —<br />or scale up as you grow.
+        </h1>
+
+        {/* Subline */}
+        <p style={{ textAlign: "center", fontSize: "15px", color: "#897866", marginBottom: "40px" }}>
+          No contracts. Cancel anytime.
+        </p>
 
         {/* Toggle */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "48px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              background: "#F0EFE9",
-              borderRadius: "30px",
-              padding: "4px",
-              border: "0.5px solid #DADCD9",
-            }}
-          >
+        <div style={{ textAlign: "center", marginBottom: "48px" }}>
+          <div style={{ display: "inline-flex", background: "#ECEAE4", borderRadius: "30px", padding: "4px", border: "0.5px solid #DADCD9" }}>
             <button
-              onClick={() => setBillingPeriod("monthly")}
+              onClick={() => setBilling("monthly")}
               style={{
-                padding: "8px 24px",
-                borderRadius: "26px",
-                border: "none",
-                fontSize: "13px",
-                fontWeight: billingPeriod === "monthly" ? 500 : 400,
-                background: billingPeriod === "monthly" ? "white" : "transparent",
-                color: billingPeriod === "monthly" ? "#363633" : "#897866",
-                cursor: "pointer",
-                boxShadow: billingPeriod === "monthly" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                transition: "all 0.15s ease",
+                padding: "8px 28px", borderRadius: "26px", border: "none", cursor: "pointer",
+                fontSize: "13px", fontWeight: billing === "monthly" ? 500 : 400,
+                background: billing === "monthly" ? "white" : "transparent",
+                color: billing === "monthly" ? "#363633" : "#897866",
+                boxShadow: billing === "monthly" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                transition: "all 0.2s",
               }}
             >
               Monthly
             </button>
             <button
-              onClick={() => setBillingPeriod("annual")}
+              onClick={() => setBilling("annual")}
               style={{
-                padding: "8px 24px",
-                borderRadius: "26px",
-                border: "none",
-                fontSize: "13px",
-                fontWeight: billingPeriod === "annual" ? 500 : 400,
-                background: billingPeriod === "annual" ? "white" : "transparent",
-                color: billingPeriod === "annual" ? "#363633" : "#897866",
-                cursor: "pointer",
-                boxShadow: billingPeriod === "annual" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                transition: "all 0.15s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
+                padding: "8px 28px", borderRadius: "26px", border: "none", cursor: "pointer",
+                fontSize: "13px", fontWeight: billing === "annual" ? 500 : 400,
+                background: billing === "annual" ? "white" : "transparent",
+                color: billing === "annual" ? "#363633" : "#897866",
+                boxShadow: billing === "annual" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                transition: "all 0.2s",
+                display: "flex", alignItems: "center", gap: "8px",
               }}
             >
               Annual
-              <span
-                style={{
-                  fontSize: "11px",
-                  background: "#526056",
-                  color: "white",
-                  borderRadius: "10px",
-                  padding: "2px 8px",
-                }}
-              >
+              <span style={{ fontSize: "11px", background: "#526056", color: "white", borderRadius: "10px", padding: "2px 8px" }}>
                 Save 30%+
               </span>
             </button>
           </div>
         </div>
 
-        {/* Pricing grid */}
-        <div className="max-w-[900px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5">
-          {PLANS.map((plan) => {
-            const isFeatured = !!plan.featured;
+        {/* Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", alignItems: "start" }}>
 
-            // Resolve current pricing tier
-            const tierData = pricing[plan.key];
-            const currentPricing = tierData ? tierData[billingPeriod] : null;
-            const priceId = currentPricing?.priceId ?? "";
-
-            return (
-              <div key={plan.label} className="relative flex flex-col">
-                {/* Badge pill above card */}
-                {plan.badge && (
-                  <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                    <span
-                      className="text-white text-[11px] font-semibold uppercase tracking-[0.08em] px-4 py-1 rounded-full"
-                      style={{ background: "#526056" }}
-                    >
-                      {plan.badge}
-                    </span>
-                  </div>
-                )}
-
-                <div
-                  className={`flex flex-col flex-1 rounded-xl p-8 border ${
-                    isFeatured ? "bg-[#363633] border-[#363633]" : "bg-card border-border"
-                  }`}
-                >
-                  <div className="mb-6">
-                    <p
-                      className={`text-[13px] font-medium uppercase tracking-[0.08em] mb-4 ${
-                        isFeatured ? "text-white/60" : "text-muted-foreground"
-                      }`}
-                    >
-                      {plan.label}
-                    </p>
-
-                    {/* Price display */}
-                    {currentPricing ? (
-                      <div style={{ marginBottom: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                          <span
-                            style={{
-                              fontSize: "42px",
-                              fontFamily: "Georgia, serif",
-                              fontWeight: 300,
-                              color: isFeatured ? "white" : "#363633",
-                              lineHeight: 1,
-                            }}
-                          >
-                            {currentPricing.price}
-                          </span>
-                          <span style={{ fontSize: "16px", color: isFeatured ? "rgba(255,255,255,0.6)" : "#897866" }}>
-                            {currentPricing.period}
-                          </span>
-                        </div>
-
-                        {/* Annual savings info */}
-                        {billingPeriod === "annual" && currentPricing.equivalent && (
-                          <div style={{ marginTop: "6px" }}>
-                            <div style={{ fontSize: "13px", color: isFeatured ? "rgba(255,255,255,0.5)" : "#897866" }}>
-                              {currentPricing.equivalent} billed annually
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "12px",
-                                color: "#526056",
-                                background: isFeatured ? "rgba(255,255,255,0.1)" : "#EEF1EE",
-                                borderRadius: "4px",
-                                padding: "2px 8px",
-                                display: "inline-block",
-                                marginTop: "4px",
-                              }}
-                            >
-                              {currentPricing.savings}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-
-                    <p
-                      className={`text-[14px] leading-relaxed mt-2 ${
-                        isFeatured ? "text-white/70" : "text-muted-foreground"
-                      }`}
-                    >
-                      {plan.description}
-                    </p>
-                  </div>
-
-                  <ul className="space-y-3 mb-8 flex-1">
-                    {plan.features.map((f) => (
-                      <li
-                        key={f}
-                        className={`flex items-start gap-2 text-[14px] ${
-                          isFeatured ? "text-white/90" : "text-foreground"
-                        }`}
-                      >
-                        <Check
-                          size={14}
-                          className="shrink-0 mt-0.5"
-                          style={{ color: isFeatured ? "white" : "#526056" }}
-                        />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div>
-                    <button
-                      onClick={() => handleCheckout(priceId)}
-                      disabled={loading === priceId}
-                      className="w-full py-3 rounded-lg text-[14px] font-medium transition-colors disabled:opacity-60"
-                      style={
-                        isFeatured
-                          ? { background: "#526056", color: "#fff", border: "none" }
-                          : { border: "1px solid #526056", color: "#526056", background: "transparent" }
-                      }
-                    >
-                      {loading === priceId ? "Loading…" : plan.cta}
-                    </button>
-                  </div>
-                </div>
+          {/* Basic */}
+          <div style={{ background: "white", border: "0.5px solid #DADCD9", borderRadius: "12px", padding: "32px 28px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#897866", marginBottom: "16px" }}>Basic</p>
+            <div style={{ marginBottom: "4px" }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "#363633" }}>{PRICES.basic[billing].amount}</span>
+              <span style={{ fontSize: "15px", color: "#897866" }}>{PRICES.basic[billing].period}</span>
+            </div>
+            {billing === "annual" && (
+              <div style={{ marginBottom: "16px" }}>
+                <p style={{ fontSize: "12px", color: "#897866" }}>{PRICES.basic.annual.equiv}</p>
+                <span style={{ fontSize: "11px", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{PRICES.basic.annual.savings}</span>
               </div>
-            );
-          })}
+            )}
+            <p style={{ fontSize: "13px", color: "#897866", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
+              Perfect for podcasters just getting started
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
+              {["2 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Email support"].map((f) => (
+                <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                  <CheckGreen /><span style={{ fontSize: "13px", color: "#363633" }}>{f}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => handleCheckout(PRICES.basic[billing].id)}
+              disabled={loading === PRICES.basic[billing].id}
+              style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+            >
+              {loading === PRICES.basic[billing].id ? "Loading..." : "Start 7-day free trial"}
+            </button>
+          </div>
+
+          {/* Starter */}
+          <div style={{ background: "white", border: "0.5px solid #DADCD9", borderRadius: "12px", padding: "32px 28px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#897866", marginBottom: "16px" }}>Starter</p>
+            <div style={{ marginBottom: "4px" }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "#363633" }}>{PRICES.starter[billing].amount}</span>
+              <span style={{ fontSize: "15px", color: "#897866" }}>{PRICES.starter[billing].period}</span>
+            </div>
+            {billing === "annual" && (
+              <div style={{ marginBottom: "16px" }}>
+                <p style={{ fontSize: "12px", color: "#897866" }}>{PRICES.starter.annual.equiv}</p>
+                <span style={{ fontSize: "11px", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{PRICES.starter.annual.savings}</span>
+              </div>
+            )}
+            <p style={{ fontSize: "13px", color: "#897866", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
+              For podcasters publishing consistently
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
+              {["4 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Episode Confidence Score", "Email support"].map((f) => (
+                <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                  <CheckGreen /><span style={{ fontSize: "13px", color: "#363633" }}>{f}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => handleCheckout(PRICES.starter[billing].id)}
+              disabled={loading === PRICES.starter[billing].id}
+              style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+            >
+              {loading === PRICES.starter[billing].id ? "Loading..." : "Start 7-day free trial"}
+            </button>
+          </div>
+
+          {/* Pro */}
+          <div style={{ background: "#363633", border: "0.5px solid #363633", borderRadius: "12px", padding: "32px 28px", position: "relative" }}>
+            <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#526056", color: "white", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "4px 14px", borderRadius: "12px", whiteSpace: "nowrap" }}>
+              Most popular
+            </div>
+            <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#CBD0CA", marginBottom: "16px" }}>Pro</p>
+            <div style={{ marginBottom: "4px" }}>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "white" }}>{PRICES.pro[billing].amount}</span>
+              <span style={{ fontSize: "15px", color: "#CBD0CA" }}>{PRICES.pro[billing].period}</span>
+            </div>
+            {billing === "annual" && (
+              <div style={{ marginBottom: "16px" }}>
+                <p style={{ fontSize: "12px", color: "#CBD0CA" }}>{PRICES.pro.annual.equiv}</p>
+                <span style={{ fontSize: "11px", color: "#CBD0CA", background: "rgba(255,255,255,0.1)", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{PRICES.pro.annual.savings}</span>
+              </div>
+            )}
+            <p style={{ fontSize: "13px", color: "#CBD0CA", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
+              For podcasters serious about growth
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
+              {["Unlimited episode runs", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Episode Confidence Score", "Clinical Credibility Guard", "Listener Transformation Statement", "Guest share package", "Priority support"].map((f) => (
+                <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                  <CheckWhite /><span style={{ fontSize: "13px", color: "white" }}>{f}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => handleCheckout(PRICES.pro[billing].id)}
+              disabled={loading === PRICES.pro[billing].id}
+              style={{ width: "100%", padding: "12px", border: "none", borderRadius: "8px", background: "#526056", color: "white", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+            >
+              {loading === PRICES.pro[billing].id ? "Loading..." : "Start 7-day free trial"}
+            </button>
+          </div>
+
         </div>
 
-        <p className="text-center mt-8 text-[13px]" style={{ color: "#897866" }}>
+        {/* Footer note */}
+        <p style={{ textAlign: "center", fontSize: "13px", color: "#897866", marginTop: "32px" }}>
           All plans include a 7-day free trial. No credit card required.
         </p>
-      </main>
 
-      <footer
-        className="px-6 text-center"
-        style={{ borderTop: "0.5px solid #DADCD9", paddingTop: "32px", paddingBottom: "32px" }}
-      >
-        <p className="text-[12px]" style={{ color: "#CBD0CA" }}>
-          Wellcast Studio · Built by Aligned Marketing Co.
-        </p>
-      </footer>
+      </div>
     </div>
   );
 }
