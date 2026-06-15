@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <img
               src="/wellcast-logo.png"
               alt="Wellcast Studio"
-              style={{ height: "68px", width: "auto" }}
+              style={{ height: "68px", width: "auto", maxWidth: "none", display: "block" }}
               onError={(e) => {
                 const img = e.currentTarget as HTMLImageElement;
                 img.style.display = "none";
