@@ -76,7 +76,8 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
             const sub = await getStripe().subscriptions.retrieve(subscriptionId);
             priceId = sub.items.data[0]?.price?.id ?? null;
             subscriptionStatus = sub.status;
-            const periodEndTs = sub.current_period_end;
+            // current_period_end exists at runtime but was removed from Stripe v17+ TS types
+            const periodEndTs = (sub as unknown as Record<string, unknown>)["current_period_end"] as number | undefined;
             if (periodEndTs && typeof periodEndTs === "number" && periodEndTs > 0) {
               currentPeriodEnd = new Date(periodEndTs * 1000).toISOString();
             }
@@ -142,7 +143,8 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
         const priceId = sub.items.data[0]?.price?.id ?? null;
-        const periodEndTs = sub.current_period_end;
+        // current_period_end exists at runtime but was removed from Stripe v17+ TS types
+        const periodEndTs = (sub as unknown as Record<string, unknown>)["current_period_end"] as number | undefined;
         const currentPeriodEndStr =
           periodEndTs && typeof periodEndTs === "number" && periodEndTs > 0
             ? new Date(periodEndTs * 1000).toISOString()

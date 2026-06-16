@@ -27,13 +27,19 @@ app.use(
   }),
 );
 
+// Build the allowed-origins list from env so production domains (Vercel, custom
+// domain) are included without hardcoding them here.
+const allowedOrigins = [
+  process.env.APP_URL,
+  process.env.REPLIT_DEV_URL,
+  "https://getwellcast.com",
+  "https://www.getwellcast.com",
+  "http://localhost:5173",
+].filter((o): o is string => Boolean(o));
+
 app.use(
   cors({
-    origin: [
-      "https://getwellcast.com",
-      "https://www.getwellcast.com",
-      process.env["REPLIT_DEV_URL"] || "http://localhost:5173",
-    ],
+    origin: allowedOrigins,
     credentials: true,
   })
 );

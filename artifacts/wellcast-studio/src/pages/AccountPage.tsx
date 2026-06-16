@@ -27,7 +27,7 @@ function getPlanName(profile: Profile | null): string {
   return "Free Trial";
 }
 
-function getPlanStatusLabel(profile: Profile | null): { label: string; icon: JSX.Element; color: string } {
+function getPlanStatusLabel(profile: Profile | null): { label: string; icon: React.ReactElement; color: string } {
   if (!profile) return { label: "Unknown", icon: <Clock className="h-3.5 w-3.5" />, color: "text-muted-foreground" };
 
   const status = profile.subscription_status;
