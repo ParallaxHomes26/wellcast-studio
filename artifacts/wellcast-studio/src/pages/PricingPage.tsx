@@ -70,13 +70,22 @@ export default function PricingPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#F3F2EE", fontFamily: "system-ui, sans-serif" }}>
+      <style>{`
+        @media (max-width: 767px) {
+          .wc-pricing-grid { grid-template-columns: 1fr !important; max-width: 420px; margin: 0 auto; }
+          .wc-pricing-h1 { font-size: 28px !important; }
+          .wc-pricing-header { flex-wrap: wrap; gap: 8px; }
+          .wc-pricing-header-nav { display: none !important; }
+          .wc-pricing-content { padding: 40px 20px !important; }
+        }
+      `}</style>
 
       {/* Header */}
-      <header style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "0.5px solid #DADCD9" }}>
+      <header className="wc-pricing-header" style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "0.5px solid #DADCD9" }}>
         <Link href="/" style={{ textDecoration: "none" }}>
           <img src="/wellcast-logo.png" alt="Wellcast" style={{ height: "80px", width: "auto" }} />
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+        <div className="wc-pricing-header-nav" style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           {user ? (
             <Link href="/dashboard" style={{ fontSize: "14px", color: "#897866", textDecoration: "none" }}>Dashboard</Link>
           ) : (
@@ -91,7 +100,7 @@ export default function PricingPage() {
       </header>
 
       {/* Page content */}
-      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "64px 24px" }}>
+      <div className="wc-pricing-content" style={{ maxWidth: "960px", margin: "0 auto", padding: "64px 24px" }}>
 
         {/* Eyebrow */}
         <p style={{ textAlign: "center", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#897866", marginBottom: "12px" }}>
@@ -99,8 +108,9 @@ export default function PricingPage() {
         </p>
 
         {/* Headline */}
-        <h1 style={{ textAlign: "center", fontFamily: "Georgia, serif", fontWeight: 300, fontSize: "42px", color: "#363633", lineHeight: 1.2, marginBottom: "12px" }}>
-          Get started today for $19/month —<br />or scale up as you grow.
+        <h1 className="wc-pricing-h1" style={{ textAlign: "center", fontFamily: "Georgia, serif", fontWeight: 300, fontSize: "42px", color: "#363633", lineHeight: 1.2, marginBottom: "12px" }}>
+          Get started today for $19/month —{" "}
+          <span style={{ whiteSpace: "nowrap" }}>or scale up as you grow.</span>
         </h1>
 
         {/* Subline */}
@@ -145,7 +155,7 @@ export default function PricingPage() {
         </div>
 
         {/* Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", alignItems: "start" }}>
+        <div className="wc-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", alignItems: "start" }}>
 
           {/* Basic */}
           <div style={{ background: "white", border: "0.5px solid #DADCD9", borderRadius: "12px", padding: "32px 28px" }}>
