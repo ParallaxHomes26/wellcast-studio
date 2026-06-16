@@ -37,11 +37,17 @@ export default function NewRunPage() {
     // Get session fresh at call time
     const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id;
+    const accessToken = session?.access_token;
 
-    if (!userId) {
+    if (!userId || !accessToken) {
       setError("Please sign in to continue.");
       return;
     }
+
+    const authHeaders = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    };
 
     setError("");
     setGenerating(true);
@@ -50,7 +56,7 @@ export default function NewRunPage() {
       // Step 1 — extract brief
       const extractRes = await fetch("/api/extract", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({
           input_method: inputMethod === "details" ? "manual" : inputMethod,
           ...(inputMethod === "transcript" && { transcript: inputData.transcript as string }),
@@ -70,7 +76,7 @@ export default function NewRunPage() {
       // Step 2 — generate all assets
       const generateRes = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({
           episode_brief: brief,
           cta,
