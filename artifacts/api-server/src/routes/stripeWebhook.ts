@@ -38,14 +38,41 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
         const isFoundingMember = session.metadata?.is_founding_member === "true";
         if (!userId) break;
 
-        await supabaseAdmin
+        const subscriptionId = session.subscription as string | null;
+        const customerId = session.customer as string | null;
+
+        // Fetch the full subscription so we can read price ID and period end
+        let priceId: string | null = null;
+        let currentPeriodEnd: string | null = null;
+        if (subscriptionId) {
+          try {
+            const sub = await getStripe().subscriptions.retrieve(subscriptionId);
+            priceId = sub.items.data[0]?.price?.id ?? null;
+            currentPeriodEnd = new Date(
+              (sub as unknown as { current_period_end: number }).current_period_end * 1000
+            ).toISOString();
+          } catch (err) {
+            logger.warn({ err, subscriptionId }, "Failed to retrieve subscription for checkout.session.completed");
+          }
+        }
+
+        const { error: updateError } = await supabaseAdmin
           .from("profiles")
           .update({
-            stripe_subscription_id: session.subscription as string,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
             subscription_status: "active",
+            subscription_price_id: priceId,
+            current_period_end: currentPeriodEnd,
             ...(isFoundingMember ? { founding_member: true } : {}),
           })
           .eq("id", userId);
+
+        if (updateError) {
+          logger.error({ userId, error: updateError.message }, "Failed to update profile on checkout.session.completed");
+        } else {
+          logger.info({ userId, subscriptionId, priceId }, "Profile updated after checkout.session.completed");
+        }
         break;
       }
 
