@@ -48,28 +48,45 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
           try {
             const sub = await getStripe().subscriptions.retrieve(subscriptionId);
             priceId = sub.items.data[0]?.price?.id ?? null;
-            currentPeriodEnd = new Date(
-              (sub as unknown as { current_period_end: number }).current_period_end * 1000
-            ).toISOString();
+            const periodEndTs = sub.current_period_end;
+            if (periodEndTs && typeof periodEndTs === "number" && periodEndTs > 0) {
+              currentPeriodEnd = new Date(periodEndTs * 1000).toISOString();
+            }
           } catch (err) {
             logger.warn({ err, subscriptionId }, "Failed to retrieve subscription for checkout.session.completed");
           }
         }
 
-        const { error: updateError } = await supabaseAdmin
+        const profileFields = {
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscriptionId,
+          subscription_status: "active",
+          subscription_price_id: priceId,
+          current_period_end: currentPeriodEnd,
+          ...(isFoundingMember ? { founding_member: true } : {}),
+        };
+
+        // Try update first; Supabase returns no error even on 0 rows matched,
+        // so we use .select() to detect a miss and fall back to upsert.
+        const { data: updated, error: updateError } = await supabaseAdmin
           .from("profiles")
-          .update({
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId,
-            subscription_status: "active",
-            subscription_price_id: priceId,
-            current_period_end: currentPeriodEnd,
-            ...(isFoundingMember ? { founding_member: true } : {}),
-          })
-          .eq("id", userId);
+          .update(profileFields)
+          .eq("id", userId)
+          .select("id");
 
         if (updateError) {
-          logger.error({ userId, error: updateError.message }, "Failed to update profile on checkout.session.completed");
+          logger.error({ userId, error: updateError.message }, "Profile update failed on checkout.session.completed");
+        } else if (!updated || updated.length === 0) {
+          // No existing row matched — upsert to create it
+          logger.warn({ userId }, "No profile row found for update — upserting");
+          const { error: upsertError } = await supabaseAdmin
+            .from("profiles")
+            .upsert({ id: userId, ...profileFields }, { onConflict: "id" });
+          if (upsertError) {
+            logger.error({ userId, error: upsertError.message }, "Profile upsert failed on checkout.session.completed");
+          } else {
+            logger.info({ userId, subscriptionId, priceId }, "Profile upserted after checkout.session.completed");
+          }
         } else {
           logger.info({ userId, subscriptionId, priceId }, "Profile updated after checkout.session.completed");
         }
