@@ -26,10 +26,8 @@ export function useProfile(): UseProfileResult {
     setError(null);
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log("Session:", session?.user?.id);
 
     if (sessionError || !session?.user?.id) {
-      console.log("No session found");
       setLoading(false);
       return;
     }
@@ -40,12 +38,8 @@ export function useProfile(): UseProfileResult {
       .eq("id", session.user.id)
       .single();
 
-    console.log("Profile result:", data);
-    console.log("Profile error:", fetchError);
-
     if (fetchError || !data) {
-      console.error("Profile fetch failed:", fetchError);
-      // Return permissive default so user isn't blocked
+      setError(fetchError?.message ?? "Profile not found");
       setProfile({
         id: session.user.id,
         email: session.user.email ?? undefined,

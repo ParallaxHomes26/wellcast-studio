@@ -1,10 +1,20 @@
 import type { RequestHandler } from "express";
 import Stripe from "stripe";
-import { getStripe } from "../lib/stripeClient";
+import { getStripe, PRICE_IDS } from "../lib/stripeClient";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 import { logger } from "../lib/logger";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
+
+function tierFromPriceId(priceId: string | null, foundingMember: boolean): string {
+  if (foundingMember) return "founding_member";
+  if (!priceId) return "trialing";
+  if (priceId === PRICE_IDS.FOUNDING_MEMBER) return "founding_member";
+  if ([PRICE_IDS.BASIC_MONTHLY, PRICE_IDS.BASIC_ANNUAL].includes(priceId as never)) return "basic";
+  if ([PRICE_IDS.STARTER_MONTHLY, PRICE_IDS.STARTER_ANNUAL].includes(priceId as never)) return "starter";
+  if ([PRICE_IDS.PRO_MONTHLY, PRICE_IDS.PRO_ANNUAL].includes(priceId as never)) return "pro";
+  return "trialing";
+}
 
 const stripeWebhookHandler: RequestHandler = async (req, res) => {
   let event: Stripe.Event;
@@ -36,47 +46,62 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.user_id;
         const isFoundingMember = session.metadata?.is_founding_member === "true";
-        if (!userId) break;
+
+        logger.info(
+          {
+            userId,
+            sessionId: session.id,
+            subscriptionId: session.subscription,
+            customerId: session.customer,
+            metadata: session.metadata,
+          },
+          "checkout.session.completed: raw session data"
+        );
+
+        if (!userId) {
+          logger.warn({ sessionId: session.id }, "checkout.session.completed: no user_id in metadata — skipping");
+          break;
+        }
 
         const subscriptionId = session.subscription as string | null;
         const customerId = session.customer as string | null;
 
-        // Fetch the full subscription so we can read price ID and period end
+        // Single subscription retrieve — get status, price, and period end in one call
         let priceId: string | null = null;
+        let subscriptionStatus = "active";
         let currentPeriodEnd: string | null = null;
+
         if (subscriptionId) {
           try {
             const sub = await getStripe().subscriptions.retrieve(subscriptionId);
             priceId = sub.items.data[0]?.price?.id ?? null;
+            subscriptionStatus = sub.status;
             const periodEndTs = sub.current_period_end;
             if (periodEndTs && typeof periodEndTs === "number" && periodEndTs > 0) {
               currentPeriodEnd = new Date(periodEndTs * 1000).toISOString();
             }
+            logger.info(
+              { subscriptionId, priceId, subscriptionStatus, currentPeriodEnd },
+              "checkout.session.completed: Stripe subscription retrieved"
+            );
           } catch (err) {
-            logger.warn({ err, subscriptionId }, "Failed to retrieve subscription for checkout.session.completed");
+            logger.warn({ err, subscriptionId }, "checkout.session.completed: failed to retrieve subscription — using active as fallback");
           }
         }
 
-        // Use actual Stripe subscription status — during trial it's "trialing",
-        // not "active". getSubscriptionTier handles paid-trialing correctly.
-        let subscriptionStatus = "active";
-        if (subscriptionId) {
-          try {
-            const statusSub = await getStripe().subscriptions.retrieve(subscriptionId);
-            subscriptionStatus = statusSub.status;
-          } catch {
-            // already retrieved above; use "active" as safe fallback
-          }
-        }
+        const subscriptionTier = tierFromPriceId(priceId, isFoundingMember);
 
         const profileFields = {
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
           subscription_status: subscriptionStatus,
           subscription_price_id: priceId,
+          subscription_tier: subscriptionTier,
           current_period_end: currentPeriodEnd,
           ...(isFoundingMember ? { founding_member: true } : {}),
         };
+
+        logger.info({ userId, profileFields }, "checkout.session.completed: writing to profiles table");
 
         // Try update first; Supabase returns no error even on 0 rows matched,
         // so we use .select() to detect a miss and fall back to upsert.
@@ -86,21 +111,30 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
           .eq("id", userId)
           .select("id");
 
+        logger.info(
+          { userId, updatedRows: updated?.length ?? 0, updateError: updateError?.message ?? null },
+          "checkout.session.completed: Supabase update result"
+        );
+
         if (updateError) {
           logger.error({ userId, error: updateError.message }, "Profile update failed on checkout.session.completed");
         } else if (!updated || updated.length === 0) {
-          // No existing row matched — upsert to create it
           logger.warn({ userId }, "No profile row found for update — upserting");
-          const { error: upsertError } = await supabaseAdmin
+          const { data: upserted, error: upsertError } = await supabaseAdmin
             .from("profiles")
-            .upsert({ id: userId, ...profileFields }, { onConflict: "id" });
+            .upsert({ id: userId, ...profileFields }, { onConflict: "id" })
+            .select("id");
+          logger.info(
+            { userId, upsertedRows: upserted?.length ?? 0, upsertError: upsertError?.message ?? null },
+            "checkout.session.completed: Supabase upsert result"
+          );
           if (upsertError) {
             logger.error({ userId, error: upsertError.message }, "Profile upsert failed on checkout.session.completed");
           } else {
-            logger.info({ userId, subscriptionId, priceId }, "Profile upserted after checkout.session.completed");
+            logger.info({ userId, subscriptionId, priceId, subscriptionTier }, "Profile upserted after checkout.session.completed");
           }
         } else {
-          logger.info({ userId, subscriptionId, priceId }, "Profile updated after checkout.session.completed");
+          logger.info({ userId, subscriptionId, priceId, subscriptionTier }, "Profile updated after checkout.session.completed");
         }
         break;
       }
@@ -113,23 +147,37 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
           periodEndTs && typeof periodEndTs === "number" && periodEndTs > 0
             ? new Date(periodEndTs * 1000).toISOString()
             : null;
+        const subscriptionTier = tierFromPriceId(priceId, false);
 
-        await supabaseAdmin
+        logger.info(
+          { subscriptionId: sub.id, status: sub.status, priceId, subscriptionTier, currentPeriodEndStr },
+          "customer.subscription.updated: updating profile"
+        );
+
+        const { data: updated, error } = await supabaseAdmin
           .from("profiles")
           .update({
             subscription_status: sub.status,
             subscription_price_id: priceId,
+            subscription_tier: subscriptionTier,
             current_period_end: currentPeriodEndStr,
           })
-          .eq("stripe_subscription_id", sub.id);
+          .eq("stripe_subscription_id", sub.id)
+          .select("id");
+
+        logger.info(
+          { updatedRows: updated?.length ?? 0, error: error?.message ?? null },
+          "customer.subscription.updated: Supabase result"
+        );
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
+        logger.info({ subscriptionId: sub.id }, "customer.subscription.deleted: marking canceled");
         await supabaseAdmin
           .from("profiles")
-          .update({ subscription_status: "canceled" })
+          .update({ subscription_status: "canceled", subscription_tier: "canceled" })
           .eq("stripe_subscription_id", sub.id);
         break;
       }
@@ -138,6 +186,7 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
         const invoice = event.data.object as Stripe.Invoice;
         const subId = (invoice as unknown as { subscription: string }).subscription;
         if (subId) {
+          logger.info({ subscriptionId: subId }, "invoice.payment_failed: marking past_due");
           await supabaseAdmin
             .from("profiles")
             .update({ subscription_status: "past_due" })
