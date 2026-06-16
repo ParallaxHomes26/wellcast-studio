@@ -20,9 +20,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchRuns = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log("Dashboard session:", session?.user?.id);
-      console.log("Dashboard session error:", sessionError);
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session?.user?.id) {
         setRunsLoading(false);
@@ -36,9 +34,8 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false })
         .limit(10);
 
-      console.log("Runs fetched:", runs?.length, "Error:", error?.message);
-
       if (runs) setRecentRuns(runs as EpisodeRun[]);
+      if (error) console.error("Runs fetch error:", error.message);
       setRunsLoading(false);
     };
 

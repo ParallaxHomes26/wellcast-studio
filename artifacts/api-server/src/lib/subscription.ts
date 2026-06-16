@@ -22,24 +22,49 @@ export interface Profile {
   run_count_reset_at?: string | null;
 }
 
+function tierFromPriceId(priceId: string | null | undefined, foundingMember: boolean | null | undefined): SubscriptionTier {
+  if (foundingMember) return "founding_member";
+  if (!priceId) return "expired";
+  if (priceId === PRICE_IDS.FOUNDING_MEMBER) return "founding_member";
+  if ([PRICE_IDS.BASIC_MONTHLY, PRICE_IDS.BASIC_ANNUAL].includes(priceId as never)) return "basic";
+  if ([PRICE_IDS.STARTER_MONTHLY, PRICE_IDS.STARTER_ANNUAL].includes(priceId as never)) return "starter";
+  if ([PRICE_IDS.PRO_MONTHLY, PRICE_IDS.PRO_ANNUAL].includes(priceId as never)) return "pro";
+  return "expired";
+}
+
 export function getSubscriptionTier(profile: Profile | null): SubscriptionTier {
   if (!profile) return "expired";
-  if (!profile.subscription_status || profile.subscription_status === "trialing") {
+
+  const status = profile.subscription_status;
+
+  // User has gone through Stripe checkout (has a subscription ID + price ID).
+  // During a paid trial Stripe sets status = "trialing" — we still resolve
+  // the tier from their price so they get full access.
+  if (profile.stripe_subscription_id && profile.subscription_price_id) {
+    if (status === "canceled") return "canceled";
+    if (status === "active" || status === "trialing") {
+      return tierFromPriceId(profile.subscription_price_id, profile.founding_member);
+    }
+    // past_due, unpaid, etc. — still return the tier so they can see the UI
+    if (status === "past_due" || status === "unpaid") {
+      return tierFromPriceId(profile.subscription_price_id, profile.founding_member);
+    }
+    return "expired";
+  }
+
+  // Free trial — no Stripe subscription yet
+  if (!status || status === "trialing") {
     if (!profile.trial_ends_at) return "trialing";
     const trialEnd = new Date(profile.trial_ends_at);
     return trialEnd > new Date() ? "trialing" : "expired";
   }
-  if (profile.founding_member && profile.subscription_status === "active") {
-    return "founding_member";
+
+  // Legacy / direct "active" without subscription_id recorded
+  if (status === "active") {
+    return tierFromPriceId(profile.subscription_price_id, profile.founding_member);
   }
-  if (profile.subscription_status === "active") {
-    const priceId = profile.subscription_price_id ?? "";
-    if ([PRICE_IDS.BASIC_MONTHLY, PRICE_IDS.BASIC_ANNUAL].includes(priceId as never)) return "basic";
-    if ([PRICE_IDS.STARTER_MONTHLY, PRICE_IDS.STARTER_ANNUAL].includes(priceId as never)) return "starter";
-    if ([PRICE_IDS.PRO_MONTHLY, PRICE_IDS.PRO_ANNUAL].includes(priceId as never)) return "pro";
-    if (priceId === PRICE_IDS.FOUNDING_MEMBER) return "founding_member";
-  }
-  if (profile.subscription_status === "canceled") return "canceled";
+
+  if (status === "canceled") return "canceled";
   return "expired";
 }
 

@@ -1175,9 +1175,9 @@ export default function RunDetailPage() {
         id="print-root"
         className="flex -mx-6 md:-mx-8 -my-6 md:-my-8 min-h-[calc(100vh-60px)]"
       >
-        {/* ── Sidebar ── */}
+        {/* ── Sidebar (desktop only) ── */}
         <aside
-          className="w-[200px] shrink-0 flex flex-col border-r border-border sticky top-0 h-[calc(100vh-60px)] overflow-y-auto print-hidden"
+          className="hidden md:flex w-[200px] shrink-0 flex-col border-r border-border sticky top-0 h-[calc(100vh-60px)] overflow-y-auto print-hidden"
           style={{ background: "#FAFAF8" }}
         >
           {/* Episode title + status */}
@@ -1252,9 +1252,67 @@ export default function RunDetailPage() {
         >
           {/* Print header */}
           <div className="hidden print:block px-8 pt-8 pb-4 border-b border-border mb-4">
-            <p className="text-[20px] font-bold" style={{ color: "#526056" }}>Wellcast Studio</p>
+            <p className="text-[20px] font-bold" style={{ color: "#526056" }}>Wellcast</p>
             <p className="text-[15px] font-medium mt-1">{runData.episode_title}</p>
             <p className="text-[12px] text-muted-foreground">Generated {new Date().toLocaleDateString()}</p>
+          </div>
+
+          {/* ── Mobile nav (hidden on md+) ── */}
+          <div className="md:hidden print-hidden border-b border-border" style={{ background: "#FAFAF8" }}>
+            {/* Episode header */}
+            <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1 text-[11px] text-muted-foreground mb-1.5"
+                >
+                  <ArrowLeft className="h-3 w-3" /> Dashboard
+                </Link>
+                <p className="text-[13px] font-semibold text-[#363633] leading-snug line-clamp-2">
+                  {runData.episode_title}
+                </p>
+              </div>
+              <span className="shrink-0 inline-flex items-center text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full border border-green-200 mt-5">
+                <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> Complete
+              </span>
+            </div>
+            {/* Scrollable tab pills */}
+            <div className="overflow-x-auto flex gap-1.5 px-4 pb-3 scrollbar-none">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors whitespace-nowrap"
+                  style={{
+                    background: activeTab === tab.id ? "#526056" : "#F0EFE9",
+                    color: activeTab === tab.id ? "#ffffff" : "#526056",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {/* Mobile actions */}
+            <div className="flex gap-2 px-4 pb-3">
+              <button
+                onClick={handlePrint}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium border transition-colors"
+                style={{ borderColor: "#526056", color: "#526056" }}
+              >
+                <Download className="h-3.5 w-3.5" /> PDF
+              </button>
+              <button
+                onClick={handleCopyAll}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium transition-colors"
+                style={{ background: "#F0EFE9", color: "#526056" }}
+              >
+                {copyAllDone ? (
+                  <><Check className="h-3.5 w-3.5" /> Copied!</>
+                ) : (
+                  <><ClipboardList className="h-3.5 w-3.5" /> Copy All</>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Tab content sections — all rendered, CSS toggles screen visibility */}

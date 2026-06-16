@@ -57,10 +57,22 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
           }
         }
 
+        // Use actual Stripe subscription status — during trial it's "trialing",
+        // not "active". getSubscriptionTier handles paid-trialing correctly.
+        let subscriptionStatus = "active";
+        if (subscriptionId) {
+          try {
+            const statusSub = await getStripe().subscriptions.retrieve(subscriptionId);
+            subscriptionStatus = statusSub.status;
+          } catch {
+            // already retrieved above; use "active" as safe fallback
+          }
+        }
+
         const profileFields = {
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
-          subscription_status: "active",
+          subscription_status: subscriptionStatus,
           subscription_price_id: priceId,
           current_period_end: currentPeriodEnd,
           ...(isFoundingMember ? { founding_member: true } : {}),
@@ -95,22 +107,21 @@ const stripeWebhookHandler: RequestHandler = async (req, res) => {
 
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
-        const { data: profiles } = await supabaseAdmin
-          .from("profiles")
-          .select("id")
-          .eq("stripe_subscription_id", sub.id);
+        const priceId = sub.items.data[0]?.price?.id ?? null;
+        const periodEndTs = sub.current_period_end;
+        const currentPeriodEndStr =
+          periodEndTs && typeof periodEndTs === "number" && periodEndTs > 0
+            ? new Date(periodEndTs * 1000).toISOString()
+            : null;
 
-        if (profiles && profiles.length > 0) {
-          const priceId = sub.items.data[0]?.price?.id ?? null;
-          await supabaseAdmin
-            .from("profiles")
-            .update({
-              subscription_status: sub.status,
-              subscription_price_id: priceId,
-              current_period_end: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000).toISOString(),
-            })
-            .eq("stripe_subscription_id", sub.id);
-        }
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            subscription_status: sub.status,
+            subscription_price_id: priceId,
+            current_period_end: currentPeriodEndStr,
+          })
+          .eq("stripe_subscription_id", sub.id);
         break;
       }
 

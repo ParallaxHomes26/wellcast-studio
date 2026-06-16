@@ -14,5 +14,5 @@ export const rateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { ip: false },
+  validate: { ip: false, xForwardedForHeader: false },
 });
