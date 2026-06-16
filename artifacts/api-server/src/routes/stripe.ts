@@ -20,34 +20,29 @@ router.post("/stripe/create-customer", async (req, res): Promise<void> => {
     return;
   }
   const { user_id } = parsed.data;
-
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("stripe_customer_id, email, full_name")
+    .select("stripe_customer_id, email, first_name")
     .eq("id", user_id)
     .single();
-
   if (profileError || !profile) {
+    req.log.error({ user_id, profileError: profileError?.message, profile }, "Profile not found in create-customer");
     res.status(404).json({ error: "Profile not found" });
     return;
   }
-
   if (profile.stripe_customer_id) {
     res.json({ customer_id: profile.stripe_customer_id });
     return;
   }
-
   const customer = await getStripe().customers.create({
     email: profile.email ?? undefined,
-    name: profile.full_name ?? undefined,
+    name: profile.first_name ?? undefined,
     metadata: { supabase_user_id: user_id },
   });
-
   await supabaseAdmin
     .from("profiles")
     .update({ stripe_customer_id: customer.id })
     .eq("id", user_id);
-
   res.json({ customer_id: customer.id });
 });
 
@@ -58,23 +53,21 @@ router.post("/stripe/create-checkout", async (req, res): Promise<void> => {
     return;
   }
   const { user_id, price_id, is_founding_member } = parsed.data;
-
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("stripe_customer_id, email, full_name")
+    .select("stripe_customer_id, email, first_name")
     .eq("id", user_id)
     .single();
-
   if (profileError || !profile) {
+    req.log.error({ user_id, profileError: profileError?.message, profile }, "Profile not found in create-checkout");
     res.status(404).json({ error: "Profile not found" });
     return;
   }
-
   let customerId = profile.stripe_customer_id;
   if (!customerId) {
     const customer = await getStripe().customers.create({
       email: profile.email ?? undefined,
-      name: profile.full_name ?? undefined,
+      name: profile.first_name ?? undefined,
       metadata: { supabase_user_id: user_id },
     });
     customerId = customer.id;
@@ -83,7 +76,6 @@ router.post("/stripe/create-checkout", async (req, res): Promise<void> => {
       .update({ stripe_customer_id: customerId })
       .eq("id", user_id);
   }
-
   const appUrl = getAppUrl();
   const session = await getStripe().checkout.sessions.create({
     customer: customerId,
@@ -97,7 +89,6 @@ router.post("/stripe/create-checkout", async (req, res): Promise<void> => {
       is_founding_member: String(is_founding_member),
     },
   });
-
   res.json({ url: session.url });
 });
 
@@ -108,24 +99,20 @@ router.post("/stripe/billing-portal", async (req, res): Promise<void> => {
     return;
   }
   const { user_id } = parsed.data;
-
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
     .select("stripe_customer_id")
     .eq("id", user_id)
     .single();
-
   if (profileError || !profile?.stripe_customer_id) {
     res.status(400).json({ error: "No billing account found" });
     return;
   }
-
   const appUrl = getAppUrl();
   const portalSession = await getStripe().billingPortal.sessions.create({
     customer: profile.stripe_customer_id,
     return_url: `${appUrl}/account`,
   });
-
   res.json({ url: portalSession.url });
 });
 

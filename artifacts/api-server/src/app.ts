@@ -26,14 +26,23 @@ app.use(
     },
   }),
 );
-app.use(cors());
+
+app.use(
+  cors({
+    origin: [
+      "https://getwellcast.com",
+      "https://www.getwellcast.com",
+      process.env["REPLIT_DEV_URL"] || "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
 
 // Stripe webhook needs raw body BEFORE express.json() parses it
 app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), stripeWebhookHandler);
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-
 app.use("/api", router);
 
 export default app;

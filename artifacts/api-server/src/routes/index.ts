@@ -6,15 +6,26 @@ import runsRouter from "./runs";
 import storageRouter from "./storage";
 import storageTestRouter from "./storageTest";
 import stripeRouter from "./stripe";
+import { requireAuth } from "../middleware/requireAuth";
+import { rateLimiter } from "../middleware/rateLimiter";
 
 const router: IRouter = Router();
 
+// Public routes — no auth needed
 router.use(healthRouter);
+router.use(stripeRouter);
+
+// Protected routes — must be authenticated
+router.use(requireAuth);
+
+// Rate limited routes — 10 requests per user per hour
+router.use(rateLimiter);
 router.use(extractRouter);
 router.use(generateRouter);
+
+// Authenticated but not rate limited
 router.use(runsRouter);
 router.use(storageRouter);
 router.use(storageTestRouter);
-router.use(stripeRouter);
 
 export default router;

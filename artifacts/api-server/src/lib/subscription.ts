@@ -24,18 +24,14 @@ export interface Profile {
 
 export function getSubscriptionTier(profile: Profile | null): SubscriptionTier {
   if (!profile) return "expired";
-
-  // Null/missing status → treat as trialing (new accounts before trigger fires)
   if (!profile.subscription_status || profile.subscription_status === "trialing") {
-    if (!profile.trial_ends_at) return "trialing"; // no end date = grace period
+    if (!profile.trial_ends_at) return "trialing";
     const trialEnd = new Date(profile.trial_ends_at);
     return trialEnd > new Date() ? "trialing" : "expired";
   }
-
   if (profile.founding_member && profile.subscription_status === "active") {
     return "founding_member";
   }
-
   if (profile.subscription_status === "active") {
     const priceId = profile.subscription_price_id ?? "";
     if ([PRICE_IDS.BASIC_MONTHLY, PRICE_IDS.BASIC_ANNUAL].includes(priceId as never)) return "basic";
@@ -43,28 +39,46 @@ export function getSubscriptionTier(profile: Profile | null): SubscriptionTier {
     if ([PRICE_IDS.PRO_MONTHLY, PRICE_IDS.PRO_ANNUAL].includes(priceId as never)) return "pro";
     if (priceId === PRICE_IDS.FOUNDING_MEMBER) return "founding_member";
   }
-
   if (profile.subscription_status === "canceled") return "canceled";
-
   return "expired";
 }
 
 export function getRunLimit(tier: SubscriptionTier): number | "unlimited" {
   switch (tier) {
-    case "trialing":       return 3;
-    case "basic":          return 2;
-    case "starter":        return 4;
-    case "pro":            return "unlimited";
+    case "trialing":        return 3;
+    case "basic":           return 2;
+    case "starter":         return 4;
+    case "pro":             return "unlimited";
     case "founding_member": return "unlimited";
-    default:               return 0;
+    default:                return 0;
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function canRunGeneration(profile: any): { allowed: boolean; reason?: string } {
-  // Allow all authenticated users during development
-  // TODO: restore subscription checking before launch
   if (!profile) return { allowed: false, reason: "Please sign in." };
+
+  const tier = getSubscriptionTier(profile);
+  const limit = getRunLimit(tier);
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      reason: "Your trial has ended. Please subscribe to continue generating content.",
+    };
+  }
+
+  if (limit === "unlimited") {
+    return { allowed: true };
+  }
+
+  const used = profile.run_count_this_month ?? 0;
+  if (used >= limit) {
+    return {
+      allowed: false,
+      reason: "You have used all generations for this month. Upgrade your plan to generate more.",
+    };
+  }
+
   return { allowed: true };
 }
 
