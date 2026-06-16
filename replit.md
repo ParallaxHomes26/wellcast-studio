@@ -64,7 +64,6 @@ See `.env.example` for all required environment variables.
 - All `/api/*` requests are routed to `api/index.ts` (serverless, 60s timeout)
 - SPA fallback: all other paths serve `index.html`
 
-**Object storage:** Replit-specific (`/api/storage/*` routes). Those routes will error on Vercel — all other routes work normally.
 
 ## Product
 

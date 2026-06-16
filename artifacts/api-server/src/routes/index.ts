@@ -3,8 +3,6 @@ import healthRouter from "./health";
 import extractRouter from "./extract";
 import generateRouter from "./generate";
 import runsRouter from "./runs";
-import storageRouter from "./storage";
-import storageTestRouter from "./storageTest";
 import stripeRouter from "./stripe";
 import { requireAuth } from "../middleware/requireAuth";
 import { rateLimiter } from "../middleware/rateLimiter";
@@ -25,7 +23,5 @@ router.use(generateRouter);
 
 // Authenticated but not rate limited
 router.use(runsRouter);
-router.use(storageRouter);
-router.use(storageTestRouter);
 
 export default router;
