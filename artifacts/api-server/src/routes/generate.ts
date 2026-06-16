@@ -253,6 +253,47 @@ EPISODE BRIEF: ${briefStr(brief)}`,
 }
 EPISODE BRIEF: ${briefStr(brief)}
 CTA: ${cta}`,
+
+  trailer_reels: (brief: Record<string, unknown>) =>
+    `You are the trailer and reels engine for Wellcast Studio — built exclusively for health and wellness podcasters. Using the episode transcript and brief, identify the most emotionally resonant, curiosity-driving, and scroll-stopping moments. Return ONLY valid JSON:
+{
+  "trailer_scripts": [
+    {
+      "option_number": 1,
+      "title": "trailer title — the angle or theme",
+      "angle": "Emotional Hook | Controversial | Punchy/Viral",
+      "runtime": "approximate runtime in seconds",
+      "best_use": "where to use this trailer — YouTube intro, podcast app preview, Instagram Stories",
+      "clips": [
+        {
+          "clip_number": 1,
+          "role": "Hook | Body | Cliffhanger Ending",
+          "timestamp_start": "MM:SS",
+          "timestamp_end": "MM:SS",
+          "speaker": "speaker name or Host if unknown",
+          "quote": "exact quote from transcript",
+          "why": "why this clip works in this position"
+        }
+      ],
+      "why_it_works": "2-3 sentence explanation of the emotional and conversion logic behind this trailer sequence"
+    }
+  ],
+  "reel_clips": [
+    {
+      "clip_number": 1,
+      "timestamp_start": "MM:SS",
+      "timestamp_end": "MM:SS",
+      "speaker": "speaker name or Host if unknown",
+      "quote": "exact quote from transcript",
+      "hook_overlay": "text overlay to open the reel — one punchy line that stops the scroll",
+      "angle": "Counterintuitive | Surprising Stat | Myth Bust | Emotional Moment | Clinical Insight",
+      "why_it_stops_scroll": "one sentence on the psychological trigger",
+      "best_platform": "Instagram Reels | YouTube Shorts | TikTok | All"
+    }
+  ]
+}
+Always generate exactly 3 trailer options with 4-5 clips each. Always generate exactly 5 reel clips. Order reel clips from highest to lowest viral potential. If the episode type is solo (no guest), set speaker to Host for all clips.
+EPISODE BRIEF: ${briefStr(brief)}`,
 };
 
 router.post("/generate", async (req, res): Promise<void> => {
@@ -331,6 +372,7 @@ router.post("/generate", async (req, res): Promise<void> => {
     amplification,
     strategy,
     intelligence,
+    trailer_reels,
   ] = await Promise.all([
     callClaude(PROMPTS.show_notes(brief, cta),    3000),
     callClaude(PROMPTS.seo_titles(brief),          3000),
@@ -343,6 +385,7 @@ router.post("/generate", async (req, res): Promise<void> => {
     callClaude(PROMPTS.amplification(brief, cta),   4000),
     callClaude(PROMPTS.strategy(brief),             5000),
     callClaude(PROMPTS.intelligence(brief, cta),    6000),
+    callClaude(PROMPTS.trailer_reels(brief),        6000),
   ]);
 
   const assets = {
@@ -357,6 +400,7 @@ router.post("/generate", async (req, res): Promise<void> => {
     amplification,
     strategy,
     intelligence,
+    trailer_reels,
   };
 
   const episodeTitle =

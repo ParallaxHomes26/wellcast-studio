@@ -24,6 +24,7 @@ type TabId =
   | "publishing"
   | "email"
   | "social"
+  | "trailers"
   | "amplification"
   | "strategy"
   | "intelligence";
@@ -1064,12 +1065,261 @@ function IntelligenceTab({ assets }: { assets: Assets }) {
   );
 }
 
+// ─── Clip copy card (individual copy button per clip) ─────────────────────────
+
+function ClipCopyCard({ copyText, children }: { copyText: string; children: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (!copyText.trim()) return;
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+  return (
+    <div className="relative border border-border rounded-lg p-3 mb-3 bg-background">
+      <button
+        onClick={handleCopy}
+        className="absolute top-2 right-2 print:hidden flex items-center gap-[5px] text-[11px] transition-all"
+        style={{
+          padding: "3px 8px",
+          border: "0.5px solid #DADCD9",
+          borderRadius: "6px",
+          background: copied ? "#526056" : "white",
+          color: copied ? "white" : "#897866",
+          cursor: "pointer",
+        }}
+      >
+        {copied ? <><Check className="h-3 w-3" /> Copied</> : <><Copy className="h-3 w-3" /> Copy</>}
+      </button>
+      {children}
+    </div>
+  );
+}
+
+// ─── Tab: Trailer & Reels ─────────────────────────────────────────────────────
+
+function TrailerReelsTab({ assets }: { assets: Assets }) {
+  const tr = asR(assets.trailer_reels);
+  const trailerScripts = arr(tr.trailer_scripts);
+  const reelClips = arr(tr.reel_clips);
+
+  const allTrailersCopy = trailerScripts
+    .map((t) => {
+      const ts = asR(t);
+      const clipLines = arr(ts.clips)
+        .map((c) => {
+          const cr = asR(c);
+          return `  Clip ${str(cr.clip_number)} [${str(cr.role)}] ${str(cr.timestamp_start)}–${str(cr.timestamp_end)}\n  ${str(cr.speaker)}: "${str(cr.quote)}"\n  Why: ${str(cr.why)}`;
+        })
+        .join("\n");
+      return [
+        `Option ${str(ts.option_number)}: ${str(ts.title)}`,
+        ts.angle ? `Angle: ${str(ts.angle)}` : "",
+        ts.runtime ? `Runtime: ~${str(ts.runtime)}` : "",
+        ts.best_use ? `Best use: ${str(ts.best_use)}` : "",
+        clipLines ? `\nClips:\n${clipLines}` : "",
+        ts.why_it_works ? `\nWhy it works: ${str(ts.why_it_works)}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n---\n\n");
+
+  const allReelsCopy = reelClips
+    .map((rc) => {
+      const r = asR(rc);
+      return [
+        `Clip ${str(r.clip_number)} [${str(r.angle)}]`,
+        `${str(r.timestamp_start)}–${str(r.timestamp_end)} · ${str(r.speaker)}`,
+        `"${str(r.quote)}"`,
+        r.hook_overlay ? `Overlay: ${str(r.hook_overlay)}` : "",
+        r.why_it_stops_scroll ? str(r.why_it_stops_scroll) : "",
+        r.best_platform ? `Platform: ${str(r.best_platform)}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
+
+  return (
+    <>
+      {/* Trailer Scripts */}
+      <AssetSection label="Trailer Scripts" copyText={allTrailersCopy}>
+        {trailerScripts.length === 0 ? (
+          <p className="text-[13px] text-muted-foreground italic">No trailer scripts generated.</p>
+        ) : (
+          trailerScripts.map((t) => {
+            const ts = asR(t);
+            const clips = arr(ts.clips);
+            const trailerCopy = [
+              `Option ${str(ts.option_number)}: ${str(ts.title)}`,
+              ts.angle ? `Angle: ${str(ts.angle)}` : "",
+              ts.runtime ? `Runtime: ~${str(ts.runtime)}` : "",
+              ts.best_use ? `Best use: ${str(ts.best_use)}` : "",
+              clips.length
+                ? `\nClips:\n${clips
+                    .map((c) => {
+                      const cr = asR(c);
+                      return `  Clip ${str(cr.clip_number)} [${str(cr.role)}] ${str(cr.timestamp_start)}–${str(cr.timestamp_end)}\n  ${str(cr.speaker)}: "${str(cr.quote)}"\n  Why: ${str(cr.why)}`;
+                    })
+                    .join("\n")}`
+                : "",
+              ts.why_it_works ? `\nWhy it works: ${str(ts.why_it_works)}` : "",
+            ]
+              .filter(Boolean)
+              .join("\n");
+
+            return (
+              <ClipCopyCard key={str(ts.option_number)} copyText={trailerCopy}>
+                {/* Option badge + title */}
+                <div className="pr-16 mb-3">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#526056] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                      Option {str(ts.option_number)}
+                    </span>
+                    {!!ts.angle && (
+                      <span className="text-[10px] font-semibold text-[#897866] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                        {str(ts.angle)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-semibold text-[14px] text-[#363633]">{str(ts.title)}</p>
+                </div>
+                {/* Metadata row */}
+                {(!!ts.runtime || !!ts.best_use) && (
+                  <div className="flex flex-wrap gap-4 text-[12px] text-muted-foreground mb-3">
+                    {!!ts.runtime && <span>⏱ ~{str(ts.runtime)}</span>}
+                    {!!ts.best_use && <span>📍 {str(ts.best_use)}</span>}
+                  </div>
+                )}
+                {/* Clip sequence */}
+                <div className="space-y-0 mb-3">
+                  {clips.map((c) => {
+                    const cr = asR(c);
+                    return (
+                      <div
+                        key={str(cr.clip_number)}
+                        className="flex gap-2.5 items-start py-2.5 border-t border-border/40 first:border-0 first:pt-0"
+                      >
+                        <div className="shrink-0 text-[10px] font-bold text-[#526056] bg-[#F0EFE9] px-1.5 py-1 rounded text-center min-w-[22px]">
+                          {str(cr.clip_number)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="text-[10px] font-semibold text-[#897866] uppercase tracking-wide">
+                              {str(cr.role)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              {str(cr.timestamp_start)}–{str(cr.timestamp_end)}
+                            </span>
+                            {!!cr.speaker && (
+                              <span className="text-[10px] text-muted-foreground">· {str(cr.speaker)}</span>
+                            )}
+                          </div>
+                          <p className="text-[13px] italic text-[#363633]">"{str(cr.quote)}"</p>
+                          {!!cr.why && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">{str(cr.why)}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Why it works */}
+                {!!ts.why_it_works && (
+                  <p className="text-[12px] text-[#526056] border-t border-border/40 pt-2 italic">
+                    {str(ts.why_it_works)}
+                  </p>
+                )}
+              </ClipCopyCard>
+            );
+          })
+        )}
+      </AssetSection>
+
+      {/* Reel Clips */}
+      <AssetSection label="Reel Clips" copyText={allReelsCopy}>
+        {reelClips.length === 0 ? (
+          <p className="text-[13px] text-muted-foreground italic">No reel clips generated.</p>
+        ) : (
+          reelClips.map((rc) => {
+            const r = asR(rc);
+            const clipCopy = [
+              `[${str(r.angle)}] ${str(r.timestamp_start)}–${str(r.timestamp_end)}`,
+              r.speaker ? `${str(r.speaker)}: "${str(r.quote)}"` : `"${str(r.quote)}"`,
+              r.hook_overlay ? `Overlay: ${str(r.hook_overlay)}` : "",
+              r.why_it_stops_scroll ? str(r.why_it_stops_scroll) : "",
+              r.best_platform ? `Platform: ${str(r.best_platform)}` : "",
+            ]
+              .filter(Boolean)
+              .join("\n");
+
+            return (
+              <ClipCopyCard key={str(r.clip_number)} copyText={clipCopy}>
+                <div className="pr-16">
+                  {/* Badges row */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#526056] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                      Clip {str(r.clip_number)}
+                    </span>
+                    {!!r.angle && (
+                      <span className="text-[10px] font-semibold text-[#897866] bg-[#F0EFE9] px-1.5 py-0.5 rounded">
+                        {str(r.angle)}
+                      </span>
+                    )}
+                    {!!r.best_platform && (
+                      <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded">
+                        {str(r.best_platform)}
+                      </span>
+                    )}
+                  </div>
+                  {/* Timestamp + speaker */}
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-2">
+                    <span className="font-mono">
+                      {str(r.timestamp_start)}–{str(r.timestamp_end)}
+                    </span>
+                    {!!r.speaker && <span>· {str(r.speaker)}</span>}
+                  </div>
+                  {/* Quote */}
+                  {!!r.quote && (
+                    <blockquote className="border-l-2 border-[#526056] pl-3 italic text-[13px] text-[#363633] mb-2">
+                      "{str(r.quote)}"
+                    </blockquote>
+                  )}
+                  {/* Hook overlay */}
+                  {!!r.hook_overlay && (
+                    <div className="bg-[#363633] text-white rounded px-3 py-2 text-[12px] font-medium mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-[#c9b99a] mr-2">
+                        Overlay
+                      </span>
+                      {str(r.hook_overlay)}
+                    </div>
+                  )}
+                  {/* Why it stops scroll */}
+                  {!!r.why_it_stops_scroll && (
+                    <p className="text-[11px] text-muted-foreground italic">
+                      {str(r.why_it_stops_scroll)}
+                    </p>
+                  )}
+                </div>
+              </ClipCopyCard>
+            );
+          })
+        )}
+      </AssetSection>
+    </>
+  );
+}
+
 // ─── Tabs config ──────────────────────────────────────────────────────────────
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "publishing", label: "Publishing & SEO" },
   { id: "email", label: "Email" },
   { id: "social", label: "Social Media" },
+  { id: "trailers", label: "Trailer & Reels" },
   { id: "amplification", label: "Amplification" },
   { id: "strategy", label: "Strategy" },
   { id: "intelligence", label: "Intelligence" },
@@ -1327,6 +1577,7 @@ export default function RunDetailPage() {
               {tab.id === "publishing" && <PublishingTab assets={runData.assets} />}
               {tab.id === "email" && <EmailTab assets={runData.assets} />}
               {tab.id === "social" && <SocialTab assets={runData.assets} />}
+              {tab.id === "trailers" && <TrailerReelsTab assets={runData.assets} />}
               {tab.id === "amplification" && <AmplificationTab assets={runData.assets} />}
               {tab.id === "strategy" && <StrategyTab assets={runData.assets} />}
               {tab.id === "intelligence" && <IntelligenceTab assets={runData.assets} />}
