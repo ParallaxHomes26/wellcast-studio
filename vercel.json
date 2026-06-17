@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/wellcast-studio run build",
+  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/wellcast-studio run build",
   "outputDirectory": "artifacts/wellcast-studio/dist/public",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,

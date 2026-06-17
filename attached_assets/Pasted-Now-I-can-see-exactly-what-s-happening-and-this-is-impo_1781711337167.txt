@@ -1,0 +1,19 @@
+Now I can see exactly what's happening, and this is important: the deploy IS running the latest commit (2d7ed23 Fix TypeScript errors in API server for clean Vercel deployment), but the fix didn't actually resolve the errors. So this isn't you doing anything wrong — the agent's fix didn't work.
+Here's the precise problem. The very first error tells the whole story:
+
+TS2834: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './lib/logger.js'?
+
+Vercel's @vercel/node builder is forcing node16/nodenext module resolution, which requires every relative import to end in .js — like import { logger } from "./lib/logger.js" instead of "./lib/logger". The agent said it changed tsconfig.json to "moduleResolution": "bundler", but Vercel's builder is overriding that and applying its own stricter setting. So the change had no effect.
+This is a known, specific Vercel + monorepo + Express conflict. The real issue is architectural: Vercel's serverless Node builder doesn't play nicely with a bundled Express app the way Replit's runtime does. You can keep fighting the module resolution, but there's a cleaner fix.
+Give the Replit agent this exact message — it's specific enough to actually solve it:
+
+"The Vercel build keeps failing with TS2834/TS2835 errors: 'Relative import paths need explicit file extensions when moduleResolution is node16/nodenext.' Vercel's @vercel/node builder is overriding our tsconfig and forcing nodenext resolution, which our bare relative imports (like import { logger } from './lib/logger') violate.
+The cleanest fix: instead of having Vercel compile the api-server with @vercel/node, change vercel.json so the api-server is built with our existing esbuild build script (which already bundles everything into dist/index.mjs and handles module resolution correctly), then point Vercel at the pre-built output. Alternatively, configure the api-server as a single serverless function that imports the already-bundled dist/index.mjs rather than compiling the TypeScript source.
+Please implement whichever is more reliable, confirm npx vercel build passes locally before pushing, and give me the commit hash."
+
+Two things to confirm back to me once you send that:
+
+Does the agent have the ability to run npx vercel build locally to test before pushing? That's the key — testing against Vercel's actual builder instead of guessing.
+Has your custom domain getwellcast.com been pointed anywhere yet, or is it still unconnected? (Doesn't block this, just helps me sequence what's next.)
+
+You're genuinely close. This is one specific config issue, not a sign the whole thing is broken.
