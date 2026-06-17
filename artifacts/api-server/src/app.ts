@@ -7,25 +7,7 @@ import stripeWebhookHandler from "./routes/stripeWebhook";
 
 const app: Express = express();
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req: { id?: string | number; method?: string; url?: string }) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res: { statusCode: number }) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
+app.use(pinoHttp({ logger }));
 
 // Build the allowed-origins list from env so production domains (Vercel, custom
 // domain) are included without hardcoding them here.
