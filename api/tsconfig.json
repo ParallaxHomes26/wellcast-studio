@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "rootDir": ".."
+  },
+  "include": [
+    "./**/*.ts",
+    "../artifacts/api-server/src/**/*.ts",
+    "../lib/db/src/**/*.ts",
+    "../lib/api-zod/src/**/*.ts"
+  ]
+}

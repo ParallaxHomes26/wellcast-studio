@@ -79,7 +79,7 @@ export function getRunLimit(tier: SubscriptionTier): number | "unlimited" {
   }
 }
 
-export function canRunGeneration(profile: any): { allowed: boolean; reason?: string } {
+export function canRunGeneration(profile: Profile | null): { allowed: boolean; reason?: string } {
   if (!profile) return { allowed: false, reason: "Please sign in." };
 
   const tier = getSubscriptionTier(profile);
