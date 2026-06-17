@@ -5,16 +5,16 @@ import { supabase } from "@/lib/supabase";
 
 const PRICES = {
   basic: {
-    monthly: { amount: "$19", period: "/month", id: "price_1Ticc72Zpe8a4y2Maiz2kAz4" },
-    annual:  { amount: "$157", period: "/year", id: "price_1TicdX2Zpe8a4y2MFC1Eyahf", equiv: "$13/mo billed annually", savings: "Save $71" },
+    monthly: { amount: "$19", period: "/month", id: "price_1TjSgPF156FzNQDF9bcVsX6f" },
+    annual:  { amount: "$157", period: "/year", id: "price_1TjSidF156FzNQDFITPhzSD3", equiv: "$13/mo billed annually", savings: "Save $71" },
   },
   starter: {
-    monthly: { amount: "$37", period: "/month", id: "price_1TiccK2Zpe8a4y2MCuAi0rWt" },
-    annual:  { amount: "$297", period: "/year", id: "price_1Ticdn2Zpe8a4y2Mlymy9XFE", equiv: "$25/mo billed annually", savings: "Save $147" },
+    monthly: { amount: "$37", period: "/month", id: "price_1TjSgxF156FzNQDFONqDK2No" },
+    annual:  { amount: "$297", period: "/year", id: "price_1TjSj8F156FzNQDFrBPIhfxO", equiv: "$25/mo billed annually", savings: "Save $147" },
   },
   pro: {
-    monthly: { amount: "$57", period: "/month", id: "price_1TiccX2Zpe8a4y2MUYJntCer" },
-    annual:  { amount: "$497", period: "/year", id: "price_1Tice32Zpe8a4y2M6VlwtdKV", equiv: "$41/mo billed annually", savings: "Save $187" },
+    monthly: { amount: "$57", period: "/month", id: "price_1TjShMF156FzNQDFUpE8iDQh" },
+    annual:  { amount: "$497", period: "/year", id: "price_1TjSjeF156FzNQDFOq8mvAJS", equiv: "$41/mo billed annually", savings: "Save $187" },
   },
 };
 
