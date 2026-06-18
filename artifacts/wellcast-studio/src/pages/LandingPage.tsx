@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { FileText, Mail, Share2, Megaphone, Calendar, Sparkles, Check } from "lucide-react";
 import EpisodeInputBar from "@/components/input/EpisodeInputBar";
@@ -35,7 +36,23 @@ const WHAT_GETS_GENERATED = [
   },
 ];
 
+const LANDING_PRICES = {
+  basic: {
+    monthly: { amount: "$19", period: "/month" },
+    annual:  { amount: "$157", period: "/year", equiv: "$13/mo billed annually", savings: "Save $71" },
+  },
+  starter: {
+    monthly: { amount: "$37", period: "/month" },
+    annual:  { amount: "$297", period: "/year", equiv: "$25/mo billed annually", savings: "Save $147" },
+  },
+  pro: {
+    monthly: { amount: "$57", period: "/month" },
+    annual:  { amount: "$497", period: "/year", equiv: "$41/mo billed annually", savings: "Save $187" },
+  },
+};
+
 export default function LandingPage() {
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans">
       {/* Header */}
@@ -171,164 +188,178 @@ export default function LandingPage() {
 
         {/* Pricing */}
         <section id="pricing" className="mt-8 pb-24 px-6">
-          <div className="max-w-[900px] mx-auto">
-            <div className="text-center mb-12">
-              <span
-                className="uppercase tracking-[0.1em] text-[11px] font-semibold mb-4 block"
-                style={{ color: "#526056" }}
-              >
-                Simple pricing
-              </span>
-              <h2 className="font-serif font-light text-[36px] text-foreground mb-3">
-                Get started today for $19/month —<br />
-                or scale up as you grow.
-              </h2>
-              <p className="text-[15px]" style={{ color: "#526056" }}>No contracts. Cancel anytime.</p>
+          <style>{`
+            @media (max-width: 767px) {
+              .lp-pricing-grid { grid-template-columns: 1fr !important; max-width: 420px; margin: 0 auto; }
+            }
+          `}</style>
+          <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+            {/* Eyebrow */}
+            <p style={{ textAlign: "center", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#897866", marginBottom: "12px" }}>
+              Simple pricing
+            </p>
+            {/* Headline */}
+            <h2 style={{ textAlign: "center", fontFamily: "Georgia, serif", fontWeight: 300, fontSize: "36px", color: "#363633", lineHeight: 1.2, marginBottom: "12px" }}>
+              Get started today for $19/month —{" "}
+              <span style={{ whiteSpace: "nowrap" }}>or scale up as you grow.</span>
+            </h2>
+            {/* Subline */}
+            <p style={{ textAlign: "center", fontSize: "15px", color: "#897866", marginBottom: "40px" }}>
+              No contracts. Cancel anytime.
+            </p>
+
+            {/* Monthly / Annual toggle */}
+            <div style={{ textAlign: "center", marginBottom: "48px" }}>
+              <div style={{ display: "inline-flex", background: "#ECEAE4", borderRadius: "30px", padding: "4px", border: "0.5px solid #DADCD9" }}>
+                <button
+                  type="button"
+                  onClick={() => setBilling("monthly")}
+                  style={{
+                    padding: "8px 28px", borderRadius: "26px", border: "none", cursor: "pointer",
+                    fontSize: "13px", fontWeight: billing === "monthly" ? 500 : 400,
+                    background: billing === "monthly" ? "white" : "transparent",
+                    color: billing === "monthly" ? "#363633" : "#897866",
+                    boxShadow: billing === "monthly" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBilling("annual")}
+                  style={{
+                    padding: "8px 28px", borderRadius: "26px", border: "none", cursor: "pointer",
+                    fontSize: "13px", fontWeight: billing === "annual" ? 500 : 400,
+                    background: billing === "annual" ? "white" : "transparent",
+                    color: billing === "annual" ? "#363633" : "#897866",
+                    boxShadow: billing === "annual" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                    transition: "all 0.2s",
+                    display: "flex", alignItems: "center", gap: "8px",
+                  }}
+                >
+                  Annual
+                  <span style={{ fontSize: "11px", background: "#526056", color: "white", borderRadius: "10px", padding: "2px 8px" }}>
+                    Save 30%+
+                  </span>
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+            {/* Cards — 3 columns */}
+            <div className="lp-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", alignItems: "start" }}>
+
               {/* Basic */}
-              <div className="bg-card border border-border rounded-xl p-8 flex flex-col">
-                <div className="mb-6">
-                  <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">Basic</p>
-                  <div className="flex items-baseline gap-1 mb-3">
-                    <span className="font-serif font-light text-[44px] text-foreground leading-none">$19</span>
-                    <span className="text-[14px] text-muted-foreground">/month</span>
-                  </div>
-                  <p className="text-[14px] text-muted-foreground leading-relaxed">Perfect for podcasters just getting started</p>
+              <div style={{ background: "white", border: "0.5px solid #DADCD9", borderRadius: "12px", padding: "32px 28px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#897866", marginBottom: "16px" }}>Basic</p>
+                <div style={{ marginBottom: "4px" }}>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "#363633" }}>{LANDING_PRICES.basic[billing].amount}</span>
+                  <span style={{ fontSize: "15px", color: "#897866" }}>{LANDING_PRICES.basic[billing].period}</span>
                 </div>
-                <ul className="space-y-3 mb-8 flex-1">
+                {billing === "annual" && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <p style={{ fontSize: "12px", color: "#897866" }}>{LANDING_PRICES.basic.annual.equiv}</p>
+                    <span style={{ fontSize: "11px", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{LANDING_PRICES.basic.annual.savings}</span>
+                  </div>
+                )}
+                <p style={{ fontSize: "13px", color: "#897866", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
+                  Perfect for podcasters just getting started
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
                   {["2 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Email support"].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-[14px] text-foreground">
-                      <Check size={14} className="shrink-0 mt-0.5" style={{ color: "#526056" }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  data-testid="button-basic-trial"
-                  className="w-full py-3 rounded-lg border text-[14px] font-medium transition-colors"
-                  style={{ borderColor: "#526056", color: "#526056" }}
-                >
-                  Start 7-day free trial
-                </button>
-              </div>
-
-              {/* Starter */}
-              <div className="bg-card border border-border rounded-xl p-8 flex flex-col">
-                <div className="mb-6">
-                  <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">Starter</p>
-                  <div className="flex items-baseline gap-1 mb-3">
-                    <span className="font-serif font-light text-[44px] text-foreground leading-none">$37</span>
-                    <span className="text-[14px] text-muted-foreground">/month</span>
-                  </div>
-                  <p className="text-[14px] text-muted-foreground leading-relaxed">For podcasters publishing consistently</p>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {["4 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Email support"].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-[14px] text-foreground">
-                      <Check size={14} className="shrink-0 mt-0.5" style={{ color: "#526056" }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  data-testid="button-starter-trial"
-                  className="w-full py-3 rounded-lg border text-[14px] font-medium transition-colors"
-                  style={{ borderColor: "#526056", color: "#526056" }}
-                >
-                  Start 7-day free trial
-                </button>
-              </div>
-
-              {/* Pro — featured */}
-              <div className="relative flex flex-col">
-                <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <span
-                    className="text-white text-[11px] font-semibold uppercase tracking-[0.08em] px-4 py-1 rounded-full"
-                    style={{ background: "#526056" }}
-                  >
-                    Most popular
-                  </span>
-                </div>
-                <div className="bg-[#363633] border border-[#363633] rounded-xl p-8 flex flex-col flex-1">
-                  <div className="mb-6">
-                    <p className="text-[13px] font-medium text-white/60 uppercase tracking-[0.08em] mb-4">Pro</p>
-                    <div className="flex items-baseline gap-1 mb-3">
-                      <span className="font-serif font-light text-[44px] text-white leading-none">$57</span>
-                      <span className="text-[14px] text-white/60">/month</span>
+                    <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}><path d="M2 7L5.5 10.5L12 4" stroke="#526056" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      <span style={{ fontSize: "13px", color: "#363633" }}>{f}</span>
                     </div>
-                    <p className="text-[14px] text-white/70 leading-relaxed">For podcasters serious about growth</p>
-                  </div>
-                  <ul className="space-y-3 mb-8 flex-1">
-                    {[
-                      "Unlimited episode runs",
-                      "All 26 assets per run",
-                      "SEO optimization",
-                      "90-day repurposing calendar",
-                      "Episode Confidence Score",
-                      "Clinical Credibility Guard",
-                      "Listener Transformation Statement",
-                      "Guest share package",
-                      "Priority support",
-                    ].map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-[14px] text-white/90">
-                        <Check size={14} className="shrink-0 mt-0.5 text-white" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+                  ))}
+                </div>
+                <Link href="/pricing">
                   <button
-                    data-testid="button-pro-trial"
-                    className="w-full py-3 rounded-lg bg-accent text-white text-[14px] font-medium hover:bg-accent/90 transition-colors"
+                    data-testid="button-basic-trial"
+                    type="button"
+                    style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
                   >
                     Start 7-day free trial
                   </button>
-                </div>
+                </Link>
               </div>
 
-              {/* Founding Member */}
-              <div className="bg-card border border-border rounded-xl p-8 flex flex-col">
-                <div className="mb-2">
-                  <span
-                    className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white px-2 py-0.5 rounded"
-                    style={{ background: "#526056" }}
-                  >
-                    50 spots only
-                  </span>
+              {/* Starter */}
+              <div style={{ background: "white", border: "0.5px solid #DADCD9", borderRadius: "12px", padding: "32px 28px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#897866", marginBottom: "16px" }}>Starter</p>
+                <div style={{ marginBottom: "4px" }}>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "#363633" }}>{LANDING_PRICES.starter[billing].amount}</span>
+                  <span style={{ fontSize: "15px", color: "#897866" }}>{LANDING_PRICES.starter[billing].period}</span>
                 </div>
-                <div className="mb-6 mt-3">
-                  <p className="text-[13px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">Founding Member</p>
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="font-serif font-light text-[44px] text-foreground leading-none">$37</span>
-                    <span className="text-[14px] text-muted-foreground">/month</span>
+                {billing === "annual" && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <p style={{ fontSize: "12px", color: "#897866" }}>{LANDING_PRICES.starter.annual.equiv}</p>
+                    <span style={{ fontSize: "11px", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{LANDING_PRICES.starter.annual.savings}</span>
                   </div>
-                  <p className="text-[12px] text-muted-foreground mb-3">locked forever</p>
-                  <p className="text-[14px] text-muted-foreground leading-relaxed">Pro features at Starter pricing — for founding members only</p>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {["Everything in Pro", "Price locked for life", "Founding member badge", "Early access to all new features"].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-[14px] text-foreground">
-                      <Check size={14} className="shrink-0 mt-0.5" style={{ color: "#526056" }} />
-                      {f}
-                    </li>
+                )}
+                <p style={{ fontSize: "13px", color: "#897866", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
+                  For podcasters publishing consistently
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
+                  {["4 episode runs per month", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Episode Confidence Score", "Email support"].map((f) => (
+                    <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}><path d="M2 7L5.5 10.5L12 4" stroke="#526056" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      <span style={{ fontSize: "13px", color: "#363633" }}>{f}</span>
+                    </div>
                   ))}
-                </ul>
-                <div className="space-y-2">
-                  <button
-                    data-testid="button-founding-waitlist"
-                    className="w-full py-3 rounded-lg text-white text-[14px] font-medium transition-colors"
-                    style={{ background: "#526056" }}
-                  >
-                    Join the waitlist
-                  </button>
-                  <p className="text-[12px] text-muted-foreground text-center">
-                    Available to waitlist members before public launch
-                  </p>
                 </div>
+                <Link href="/pricing">
+                  <button
+                    data-testid="button-starter-trial"
+                    type="button"
+                    style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+                  >
+                    Start 7-day free trial
+                  </button>
+                </Link>
               </div>
+
+              {/* Pro — white card, Most popular badge */}
+              <div style={{ background: "white", border: "0.5px solid #DADCD9", borderRadius: "12px", padding: "32px 28px", position: "relative" }}>
+                <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#526056", color: "white", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "4px 14px", borderRadius: "12px", whiteSpace: "nowrap" }}>
+                  Most popular
+                </div>
+                <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#897866", marginBottom: "16px" }}>Pro</p>
+                <div style={{ marginBottom: "4px" }}>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "#363633" }}>{LANDING_PRICES.pro[billing].amount}</span>
+                  <span style={{ fontSize: "15px", color: "#897866" }}>{LANDING_PRICES.pro[billing].period}</span>
+                </div>
+                {billing === "annual" && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <p style={{ fontSize: "12px", color: "#897866" }}>{LANDING_PRICES.pro.annual.equiv}</p>
+                    <span style={{ fontSize: "11px", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{LANDING_PRICES.pro.annual.savings}</span>
+                  </div>
+                )}
+                <p style={{ fontSize: "13px", color: "#897866", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
+                  For podcasters serious about growth
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
+                  {["Unlimited episode runs", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Episode Confidence Score", "Clinical Credibility Guard", "Listener Transformation Statement", "Guest share package", "Priority support"].map((f) => (
+                    <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}><path d="M2 7L5.5 10.5L12 4" stroke="#526056" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      <span style={{ fontSize: "13px", color: "#363633" }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link href="/pricing">
+                  <button
+                    data-testid="button-pro-trial"
+                    type="button"
+                    style={{ width: "100%", padding: "12px", border: "none", borderRadius: "8px", background: "#526056", color: "white", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+                  >
+                    Start 7-day free trial
+                  </button>
+                </Link>
+              </div>
+
             </div>
-            <p className="text-center mt-8 text-[13px]" style={{ color: "#897866" }}>
+
+            <p style={{ textAlign: "center", fontSize: "13px", color: "#897866", marginTop: "32px" }}>
               All plans include a 7-day free trial. No credit card required.
             </p>
           </div>
