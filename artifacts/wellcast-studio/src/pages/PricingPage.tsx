@@ -26,14 +26,6 @@ function CheckGreen() {
   );
 }
 
-function CheckWhite() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}>
-      <path d="M2 7L5.5 10.5L12 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [loading, setLoading] = useState<string | null>(null);
@@ -47,8 +39,13 @@ export default function PricingPage() {
     }
     setLoading(priceId);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token ?? "";
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        alert("Your session has expired. Please sign in again.");
+        setLocation("/login");
+        return;
+      }
+      const accessToken = sessionData.session.access_token;
 
       const res = await fetch("/api/stripe/create-checkout", {
         method: "POST",
@@ -58,10 +55,22 @@ export default function PricingPage() {
         },
         body: JSON.stringify({ user_id: user.id, price_id: priceId, is_founding_member: false }),
       });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("Checkout error", res.status, text);
+        alert(`Something went wrong (${res.status}). Please try again.`);
+        return;
+      }
+
       const data = await res.json() as { url?: string; error?: string };
-      if (data.url) window.location.href = data.url;
-      else alert("Something went wrong. Please try again.");
-    } catch {
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error ?? "Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      console.error("Checkout exception", err);
       alert("Something went wrong. Please try again.");
     } finally {
       setLoading(null);
@@ -118,10 +127,11 @@ export default function PricingPage() {
           No contracts. Cancel anytime.
         </p>
 
-        {/* Toggle */}
+        {/* Monthly / Annual toggle */}
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
           <div style={{ display: "inline-flex", background: "#ECEAE4", borderRadius: "30px", padding: "4px", border: "0.5px solid #DADCD9" }}>
             <button
+              type="button"
               onClick={() => setBilling("monthly")}
               style={{
                 padding: "8px 28px", borderRadius: "26px", border: "none", cursor: "pointer",
@@ -135,6 +145,7 @@ export default function PricingPage() {
               Monthly
             </button>
             <button
+              type="button"
               onClick={() => setBilling("annual")}
               style={{
                 padding: "8px 28px", borderRadius: "26px", border: "none", cursor: "pointer",
@@ -154,7 +165,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Cards */}
+        {/* Cards — 3 columns */}
         <div className="wc-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", alignItems: "start" }}>
 
           {/* Basic */}
@@ -181,9 +192,10 @@ export default function PricingPage() {
               ))}
             </div>
             <button
+              type="button"
               onClick={() => handleCheckout(PRICES.basic[billing].id)}
               disabled={loading === PRICES.basic[billing].id}
-              style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+              style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: loading === PRICES.basic[billing].id ? "not-allowed" : "pointer" }}
             >
               {loading === PRICES.basic[billing].id ? "Loading..." : "Start 7-day free trial"}
             </button>
@@ -213,44 +225,46 @@ export default function PricingPage() {
               ))}
             </div>
             <button
+              type="button"
               onClick={() => handleCheckout(PRICES.starter[billing].id)}
               disabled={loading === PRICES.starter[billing].id}
-              style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+              style={{ width: "100%", padding: "12px", border: "1px solid #526056", borderRadius: "8px", background: "transparent", color: "#526056", fontSize: "14px", fontWeight: 500, cursor: loading === PRICES.starter[billing].id ? "not-allowed" : "pointer" }}
             >
               {loading === PRICES.starter[billing].id ? "Loading..." : "Start 7-day free trial"}
             </button>
           </div>
 
-          {/* Pro */}
-          <div style={{ background: "#363633", border: "0.5px solid #363633", borderRadius: "12px", padding: "32px 28px", position: "relative" }}>
+          {/* Pro — white card, matching Basic and Starter */}
+          <div style={{ background: "white", border: "0.5px solid #DADCD9", borderRadius: "12px", padding: "32px 28px", position: "relative" }}>
             <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#526056", color: "white", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "4px 14px", borderRadius: "12px", whiteSpace: "nowrap" }}>
               Most popular
             </div>
-            <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#CBD0CA", marginBottom: "16px" }}>Pro</p>
+            <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", color: "#897866", marginBottom: "16px" }}>Pro</p>
             <div style={{ marginBottom: "4px" }}>
-              <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "white" }}>{PRICES.pro[billing].amount}</span>
-              <span style={{ fontSize: "15px", color: "#CBD0CA" }}>{PRICES.pro[billing].period}</span>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: "42px", fontWeight: 300, color: "#363633" }}>{PRICES.pro[billing].amount}</span>
+              <span style={{ fontSize: "15px", color: "#897866" }}>{PRICES.pro[billing].period}</span>
             </div>
             {billing === "annual" && (
               <div style={{ marginBottom: "16px" }}>
-                <p style={{ fontSize: "12px", color: "#CBD0CA" }}>{PRICES.pro.annual.equiv}</p>
-                <span style={{ fontSize: "11px", color: "#CBD0CA", background: "rgba(255,255,255,0.1)", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{PRICES.pro.annual.savings}</span>
+                <p style={{ fontSize: "12px", color: "#897866" }}>{PRICES.pro.annual.equiv}</p>
+                <span style={{ fontSize: "11px", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "2px 8px", display: "inline-block", marginTop: "4px" }}>{PRICES.pro.annual.savings}</span>
               </div>
             )}
-            <p style={{ fontSize: "13px", color: "#CBD0CA", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
+            <p style={{ fontSize: "13px", color: "#897866", marginBottom: "24px", marginTop: billing === "monthly" ? "16px" : "0" }}>
               For podcasters serious about growth
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
               {["Unlimited episode runs", "All 26 assets per run", "SEO optimization", "90-day repurposing calendar", "Episode Confidence Score", "Clinical Credibility Guard", "Listener Transformation Statement", "Guest share package", "Priority support"].map((f) => (
                 <div key={f} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-                  <CheckWhite /><span style={{ fontSize: "13px", color: "white" }}>{f}</span>
+                  <CheckGreen /><span style={{ fontSize: "13px", color: "#363633" }}>{f}</span>
                 </div>
               ))}
             </div>
             <button
+              type="button"
               onClick={() => handleCheckout(PRICES.pro[billing].id)}
               disabled={loading === PRICES.pro[billing].id}
-              style={{ width: "100%", padding: "12px", border: "none", borderRadius: "8px", background: "#526056", color: "white", fontSize: "14px", fontWeight: 500, cursor: "pointer" }}
+              style={{ width: "100%", padding: "12px", border: "none", borderRadius: "8px", background: "#526056", color: "white", fontSize: "14px", fontWeight: 500, cursor: loading === PRICES.pro[billing].id ? "not-allowed" : "pointer" }}
             >
               {loading === PRICES.pro[billing].id ? "Loading..." : "Start 7-day free trial"}
             </button>
