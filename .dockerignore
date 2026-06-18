@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+**/node_modules
+**/dist
+**/.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
