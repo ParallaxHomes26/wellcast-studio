@@ -1,10 +1,11 @@
 import type { EpisodeBrief } from "@/types";
+import { API_BASE } from "@/lib/api";
 
 export async function generateAssets(
   brief: EpisodeBrief,
   cta: string
 ): Promise<Record<string, string>> {
-  const response = await fetch("/api/generate", {
+  const response = await fetch(`${API_BASE}/api/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

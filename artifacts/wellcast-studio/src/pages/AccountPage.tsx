@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { API_BASE } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ExternalLink, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -64,7 +65,7 @@ export default function AccountPage() {
     if (!user) return;
     setPortalLoading(true);
     try {
-      const res = await fetch("/api/stripe/billing-portal", {
+      const res = await fetch(`${API_BASE}/api/stripe/billing-portal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: user.id }),

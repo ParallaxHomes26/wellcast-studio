@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "wouter";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { API_BASE } from "@/lib/api";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -1347,7 +1348,7 @@ export default function RunDetailPage() {
         return;
       }
     } catch {}
-    fetch(`/api/runs/${runId}`)
+    fetch(`${API_BASE}/api/runs/${runId}`)
       .then(async (r) => {
         if (!r.ok) throw new Error("Run not found");
         const d = await r.json() as { id: string; episode_title: string; assets: Assets };

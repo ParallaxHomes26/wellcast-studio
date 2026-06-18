@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import EpisodeInputBar from "@/components/input/EpisodeInputBar";
 import GeneratingScreen from "@/components/ui/GeneratingScreen";
 import { supabase } from "@/lib/supabase";
+import { API_BASE } from "@/lib/api";
 import type { Session } from "@supabase/supabase-js";
 
 export default function NewRunPage() {
@@ -54,7 +55,7 @@ export default function NewRunPage() {
 
     try {
       // Step 1 — extract brief
-      const extractRes = await fetch("/api/extract", {
+      const extractRes = await fetch(`${API_BASE}/api/extract`, {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({
@@ -74,7 +75,7 @@ export default function NewRunPage() {
       const brief = await extractRes.json();
 
       // Step 2 — generate all assets
-      const generateRes = await fetch("/api/generate", {
+      const generateRes = await fetch(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({

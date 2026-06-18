@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { API_BASE } from "@/lib/api";
 
 const PRICES = {
   basic: {
@@ -47,7 +48,7 @@ export default function PricingPage() {
       }
       const accessToken = sessionData.session.access_token;
 
-      const res = await fetch("/api/stripe/create-checkout", {
+      const res = await fetch(`${API_BASE}/api/stripe/create-checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
