@@ -1,13 +1,14 @@
 // @ts-nocheck
+/* eslint-disable */
 /**
  * Vercel serverless function entry point.
  *
- * Imports the pre-built Express app bundle produced by the api-server esbuild
- * script. Using the compiled JS output avoids Vercel's @vercel/node builder
- * forcing node16/nodenext module resolution onto our TypeScript source files,
- * which would require explicit .js extensions on every relative import.
+ * Vercel's @vercel/node runtime loads function files with require(), which
+ * cannot load ES modules. This file therefore uses CommonJS module.exports
+ * so the runtime can load it, and requires the pre-built CJS bundle of the
+ * Express app produced by `pnpm --filter @workspace/api-server run build`.
  *
- * The bundle is produced by `pnpm --filter @workspace/api-server run build`
- * which runs before this function is deployed (see vercel.json buildCommand).
+ * The bundle is produced in vercel.json's buildCommand before deployment.
  */
-export { default } from "../artifacts/api-server/dist/app.mjs";
+const appModule = require("../artifacts/api-server/dist/app.cjs");
+module.exports = appModule.default ?? appModule;
