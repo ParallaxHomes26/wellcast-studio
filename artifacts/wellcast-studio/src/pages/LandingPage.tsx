@@ -127,7 +127,49 @@ export default function LandingPage() {
       <main className="flex-1">
 
         {/* ── 1. HERO ── */}
-        <section className="pt-16 md:pt-28 pb-16 md:pb-24 px-5 md:px-8 text-center max-w-4xl mx-auto flex flex-col items-center">
+        <section className="relative overflow-hidden">
+          {/* Decorative background arcs — oversized, very faint echo of the logo wave shape */}
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            viewBox="0 0 500 500"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{
+              position: "absolute",
+              right: "-60px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: "640px",
+              height: "640px",
+              opacity: 0.065,
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            {/* Arc 1 — innermost */}
+            <path
+              d="M 175 500 A 75 75 0 0 1 325 500"
+              stroke="#526056" strokeWidth="14" strokeLinecap="round"
+            />
+            {/* Arc 2 */}
+            <path
+              d="M 130 500 A 120 120 0 0 1 370 500"
+              stroke="#526056" strokeWidth="12" strokeLinecap="round"
+            />
+            {/* Arc 3 */}
+            <path
+              d="M 85 500 A 165 165 0 0 1 415 500"
+              stroke="#526056" strokeWidth="10" strokeLinecap="round"
+            />
+            {/* Arc 4 — outermost */}
+            <path
+              d="M 40 500 A 210 210 0 0 1 460 500"
+              stroke="#526056" strokeWidth="8" strokeLinecap="round"
+            />
+          </svg>
+
+        <div className="relative z-10 pt-16 md:pt-28 pb-16 md:pb-24 px-5 md:px-8 text-center max-w-4xl mx-auto flex flex-col items-center">
           <span
             className="uppercase tracking-[0.12em] text-[11px] font-semibold mb-6 block"
             style={{ color: "#526056" }}
@@ -158,6 +200,7 @@ export default function LandingPage() {
           <p className="text-[13px] mt-4" style={{ color: "#897866" }}>
             No credit card required. Cancel anytime.
           </p>
+        </div>
         </section>
 
         {/* ── 2. THE PROBLEM ── */}
