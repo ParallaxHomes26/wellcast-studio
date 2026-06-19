@@ -1,17 +1,11 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/wellcast-studio run build",
+  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/wellcast-studio run build",
   "outputDirectory": "artifacts/wellcast-studio/dist/public",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
-  "functions": {
-    "api/index.ts": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api" },
+    { "source": "/api/:path*", "destination": "https://workspaceapi-server-production-91a1.up.railway.app/api/:path*" },
     { "source": "/:path*",     "destination": "/" }
   ]
 }
