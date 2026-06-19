@@ -6,16 +6,16 @@ import { API_BASE } from "@/lib/api";
 
 const PRICES = {
   basic: {
-    monthly: { amount: "$19", period: "/month", id: "price_1TjSgPF156FzNQDF9bcVsX6f" },
-    annual:  { amount: "$157", period: "/year", id: "price_1TjSidF156FzNQDFITPhzSD3", equiv: "$13/mo billed annually", savings: "Save $71" },
+    monthly: { amount: "$19", period: "/month", id: "price_1TibHO2Zpe8a4y2MgNN4wVrI" },
+    annual:  { amount: "$157", period: "/year", id: "price_1TibL22Zpe8a4y2MWJx4WYFY", equiv: "$13/mo billed annually", savings: "Save $71" },
   },
   starter: {
-    monthly: { amount: "$37", period: "/month", id: "price_1TjSgxF156FzNQDFONqDK2No" },
-    annual:  { amount: "$297", period: "/year", id: "price_1TjSj8F156FzNQDFrBPIhfxO", equiv: "$25/mo billed annually", savings: "Save $147" },
+    monthly: { amount: "$37", period: "/month", id: "price_1TibHw2Zpe8a4y2MouaBgTQW" },
+    annual:  { amount: "$297", period: "/year", id: "price_1TibLg2Zpe8a4y2M2MWuaYjV", equiv: "$25/mo billed annually", savings: "Save $147" },
   },
   pro: {
-    monthly: { amount: "$57", period: "/month", id: "price_1TjShMF156FzNQDFUpE8iDQh" },
-    annual:  { amount: "$497", period: "/year", id: "price_1TjSjeF156FzNQDFOq8mvAJS", equiv: "$41/mo billed annually", savings: "Save $187" },
+    monthly: { amount: "$57", period: "/month", id: "price_1TibIO2Zpe8a4y2MW1yIg27S" },
+    annual:  { amount: "$497", period: "/year", id: "price_1TibM02Zpe8a4y2MiKl4WaI5", equiv: "$41/mo billed annually", savings: "Save $187" },
   },
 };
 
