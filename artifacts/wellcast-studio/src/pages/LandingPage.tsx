@@ -139,7 +139,7 @@ export default function LandingPage() {
             style={{ fontSize: "44px", lineHeight: 1.15 }}
           >
             Your episode is recorded.<br />
-            <span style={{ color: "#897866" }}>Now comes the part that takes the rest of your week.</span>
+            <span style={{ color: "#897866" }}>Now comes the part that<br />takes the rest of your week.</span>
           </h1>
 
           <p className="text-[17px] md:text-[19px] leading-relaxed mb-10 max-w-[580px]" style={{ color: "#526056" }}>
