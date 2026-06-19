@@ -210,6 +210,168 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── 3b. PRODUCT MOCKUP ── */}
+        <section className="py-20 md:py-28 px-5 md:px-8" style={{ borderTop: "0.5px solid #DADCD9", background: "#F3F2EE" }}>
+          <div className="max-w-[860px] mx-auto">
+
+            {/* Eyebrow + caption */}
+            <div className="text-center mb-10">
+              <span className="uppercase tracking-[0.14em] text-[11px] font-semibold mb-3 block" style={{ color: "#526056" }}>
+                Your output
+              </span>
+              <h2 className="lp-section-h2 font-serif font-light text-foreground mb-3" style={{ fontSize: "36px" }}>
+                See what gets generated.
+              </h2>
+              <p className="text-[15px]" style={{ color: "#897866" }}>
+                Every asset ready to copy and use — no editing required.
+              </p>
+            </div>
+
+            {/* App window frame */}
+            <div style={{
+              borderRadius: "12px",
+              overflow: "hidden",
+              boxShadow: "0 20px 60px rgba(54,54,51,0.13), 0 4px 16px rgba(54,54,51,0.07)",
+              border: "0.5px solid #DADCD9",
+              background: "white",
+            }}>
+
+              {/* Browser chrome bar */}
+              <div style={{
+                background: "#ECEAE4",
+                padding: "12px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                borderBottom: "0.5px solid #DADCD9",
+              }}>
+                {/* Traffic lights */}
+                <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                  <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#FF5F57" }} />
+                  <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#FFBD2E" }} />
+                  <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#27C840" }} />
+                </div>
+                {/* URL bar */}
+                <div style={{
+                  flex: 1,
+                  background: "white",
+                  borderRadius: "6px",
+                  padding: "5px 12px",
+                  fontSize: "12px",
+                  color: "#897866",
+                  border: "0.5px solid #DADCD9",
+                  textAlign: "center",
+                }}>
+                  app.getwellcast.com/run/gut-health-episode
+                </div>
+              </div>
+
+              {/* Tab bar */}
+              <div style={{
+                background: "#FAFAF8",
+                borderBottom: "0.5px solid #DADCD9",
+                display: "flex",
+                overflowX: "auto",
+                padding: "0 20px",
+              }}>
+                {["Show Notes", "SEO Titles", "Social", "Email", "Carousel", "Hooks", "Strategy"].map((tab) => {
+                  const active = tab === "Show Notes";
+                  return (
+                    <div
+                      key={tab}
+                      style={{
+                        padding: "11px 16px",
+                        fontSize: "13px",
+                        fontWeight: active ? 500 : 400,
+                        color: active ? "#526056" : "#B0ADA6",
+                        borderBottom: active ? "2px solid #526056" : "2px solid transparent",
+                        whiteSpace: "nowrap",
+                        cursor: "default",
+                        transition: "color 0.15s",
+                        marginBottom: "-0.5px",
+                      }}
+                    >
+                      {tab}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Content area — show notes output */}
+              <div style={{ padding: "32px 36px", background: "white" }}>
+
+                {/* Primary keyword badge */}
+                <div style={{ marginBottom: "20px" }}>
+                  <span style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "#526056",
+                    background: "#EEF1EE",
+                    borderRadius: "4px",
+                    padding: "3px 10px",
+                    display: "inline-block",
+                  }}>
+                    Primary keyword: gut health for beginners
+                  </span>
+                </div>
+
+                {/* Episode title */}
+                <h3 style={{ fontFamily: "Georgia, serif", fontSize: "20px", fontWeight: 400, color: "#363633", marginBottom: "12px", lineHeight: 1.3 }}>
+                  The Gut-Brain Connection: Why Your Microbiome Shapes Everything
+                </h3>
+
+                {/* Hook */}
+                <p style={{ fontSize: "15px", fontWeight: 500, color: "#526056", marginBottom: "16px", lineHeight: 1.6, borderLeft: "3px solid #526056", paddingLeft: "14px", fontStyle: "italic" }}>
+                  Most people treat their gut like a digestive organ. The latest research shows it's actually running your mood, your immune system, and your ability to focus — and most of us have spent years unknowingly damaging it.
+                </p>
+
+                {/* Summary */}
+                <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.8, marginBottom: "16px" }}>
+                  In this episode, functional nutritionist Dr. Mara Chen breaks down the science of the gut microbiome in plain language — no jargon, no overwhelm. She explains how the trillions of bacteria living in your digestive system communicate directly with your brain through the vagus nerve, and why this "second brain" may be more influential than anyone previously understood.
+                </p>
+                <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.8, marginBottom: "24px" }}>
+                  Dr. Chen also shares her clinical framework for rebuilding a compromised microbiome — including the three dietary shifts she recommends to every patient before anything else, and why probiotic supplements alone rarely move the needle. If you've struggled with energy crashes, brain fog, or stubborn digestive issues, this episode explains why.
+                </p>
+
+                {/* What you'll learn */}
+                <div style={{ background: "#FAFAF8", borderRadius: "8px", padding: "20px 24px", border: "0.5px solid #ECEAE4" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#897866", marginBottom: "14px" }}>
+                    What you'll learn
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {[
+                      "How the vagus nerve connects your gut and brain — and what disrupts that signal",
+                      "The 3 dietary shifts Dr. Chen prescribes before any supplement protocol",
+                      "Why diversity (not just quantity) of gut bacteria is the real marker of health",
+                      "A simple 5-day reset to begin rebuilding your microbiome this week",
+                    ].map((point) => (
+                      <div key={point} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                        <CheckIcon />
+                        <span style={{ fontSize: "13px", color: "#363633", lineHeight: 1.6 }}>{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Copy button row */}
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", gap: "10px" }}>
+                  <div style={{ fontSize: "12px", color: "#B0ADA6", padding: "7px 14px", border: "0.5px solid #DADCD9", borderRadius: "6px", cursor: "default" }}>
+                    Regenerate
+                  </div>
+                  <div style={{ fontSize: "12px", color: "white", background: "#526056", padding: "7px 16px", borderRadius: "6px", cursor: "default", fontWeight: 500 }}>
+                    Copy to clipboard
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            {/* End app window */}
+
+          </div>
+        </section>
+
         {/* ── 4. HOW IT WORKS ── */}
         <section className="py-20 md:py-28 px-5 md:px-8" style={{ borderTop: "0.5px solid #DADCD9", background: "#FAFAF8" }}>
           <div className="max-w-[860px] mx-auto">
