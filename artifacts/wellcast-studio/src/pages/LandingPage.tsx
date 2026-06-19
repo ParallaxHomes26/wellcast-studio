@@ -66,6 +66,7 @@ function CheckIcon() {
 
 export default function LandingPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [activeTab, setActiveTab] = useState("Show Notes");
 
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans">
@@ -220,7 +221,7 @@ export default function LandingPage() {
                 Your output
               </span>
               <h2 className="lp-section-h2 font-serif font-light text-foreground mb-3" style={{ fontSize: "36px" }}>
-                See what gets generated.
+                Your episode. Ready to market.
               </h2>
               <p className="text-[15px]" style={{ color: "#897866" }}>
                 Every asset ready to copy and use — no editing required.
@@ -245,28 +246,20 @@ export default function LandingPage() {
                 gap: "12px",
                 borderBottom: "0.5px solid #DADCD9",
               }}>
-                {/* Traffic lights */}
                 <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                   <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#FF5F57" }} />
                   <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#FFBD2E" }} />
                   <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#27C840" }} />
                 </div>
-                {/* URL bar */}
                 <div style={{
-                  flex: 1,
-                  background: "white",
-                  borderRadius: "6px",
-                  padding: "5px 12px",
-                  fontSize: "12px",
-                  color: "#897866",
-                  border: "0.5px solid #DADCD9",
-                  textAlign: "center",
+                  flex: 1, background: "white", borderRadius: "6px", padding: "5px 12px",
+                  fontSize: "12px", color: "#897866", border: "0.5px solid #DADCD9", textAlign: "center",
                 }}>
                   app.getwellcast.com/run/gut-health-episode
                 </div>
               </div>
 
-              {/* Tab bar */}
+              {/* Tab bar — interactive */}
               <div style={{
                 background: "#FAFAF8",
                 borderBottom: "0.5px solid #DADCD9",
@@ -275,88 +268,199 @@ export default function LandingPage() {
                 padding: "0 20px",
               }}>
                 {["Show Notes", "SEO Titles", "Social", "Email", "Carousel", "Hooks", "Strategy"].map((tab) => {
-                  const active = tab === "Show Notes";
+                  const active = tab === activeTab;
                   return (
-                    <div
+                    <button
                       key={tab}
+                      type="button"
+                      onClick={() => setActiveTab(tab)}
                       style={{
                         padding: "11px 16px",
                         fontSize: "13px",
                         fontWeight: active ? 500 : 400,
                         color: active ? "#526056" : "#B0ADA6",
-                        borderBottom: active ? "2px solid #526056" : "2px solid transparent",
                         whiteSpace: "nowrap",
-                        cursor: "default",
+                        cursor: "pointer",
+                        background: "none",
+                        border: "none",
+                        borderBottom: active ? "2px solid #526056" : "2px solid transparent",
                         transition: "color 0.15s",
                         marginBottom: "-0.5px",
                       }}
                     >
                       {tab}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
 
-              {/* Content area — show notes output */}
-              <div style={{ padding: "32px 36px", background: "white" }}>
+              {/* Content area — switches by tab */}
+              <div style={{ padding: "32px 36px", background: "white", minHeight: "340px" }}>
 
-                {/* Primary keyword badge */}
-                <div style={{ marginBottom: "20px" }}>
-                  <span style={{
-                    fontSize: "10px",
-                    fontWeight: 600,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "#526056",
-                    background: "#EEF1EE",
-                    borderRadius: "4px",
-                    padding: "3px 10px",
-                    display: "inline-block",
-                  }}>
-                    Primary keyword: gut health for beginners
-                  </span>
-                </div>
-
-                {/* Episode title */}
-                <h3 style={{ fontFamily: "Georgia, serif", fontSize: "20px", fontWeight: 400, color: "#363633", marginBottom: "12px", lineHeight: 1.3 }}>
-                  The Gut-Brain Connection: Why Your Microbiome Shapes Everything
-                </h3>
-
-                {/* Hook */}
-                <p style={{ fontSize: "15px", fontWeight: 500, color: "#526056", marginBottom: "16px", lineHeight: 1.6, borderLeft: "3px solid #526056", paddingLeft: "14px", fontStyle: "italic" }}>
-                  Most people treat their gut like a digestive organ. The latest research shows it's actually running your mood, your immune system, and your ability to focus — and most of us have spent years unknowingly damaging it.
-                </p>
-
-                {/* Summary */}
-                <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.8, marginBottom: "16px" }}>
-                  In this episode, functional nutritionist Dr. Mara Chen breaks down the science of the gut microbiome in plain language — no jargon, no overwhelm. She explains how the trillions of bacteria living in your digestive system communicate directly with your brain through the vagus nerve, and why this "second brain" may be more influential than anyone previously understood.
-                </p>
-                <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.8, marginBottom: "24px" }}>
-                  Dr. Chen also shares her clinical framework for rebuilding a compromised microbiome — including the three dietary shifts she recommends to every patient before anything else, and why probiotic supplements alone rarely move the needle. If you've struggled with energy crashes, brain fog, or stubborn digestive issues, this episode explains why.
-                </p>
-
-                {/* What you'll learn */}
-                <div style={{ background: "#FAFAF8", borderRadius: "8px", padding: "20px 24px", border: "0.5px solid #ECEAE4" }}>
-                  <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#897866", marginBottom: "14px" }}>
-                    What you'll learn
-                  </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {[
-                      "How the vagus nerve connects your gut and brain — and what disrupts that signal",
-                      "The 3 dietary shifts Dr. Chen prescribes before any supplement protocol",
-                      "Why diversity (not just quantity) of gut bacteria is the real marker of health",
-                      "A simple 5-day reset to begin rebuilding your microbiome this week",
-                    ].map((point) => (
-                      <div key={point} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-                        <CheckIcon />
-                        <span style={{ fontSize: "13px", color: "#363633", lineHeight: 1.6 }}>{point}</span>
+                {/* ── SHOW NOTES ── */}
+                {activeTab === "Show Notes" && (
+                  <>
+                    <div style={{ marginBottom: "20px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "3px 10px", display: "inline-block" }}>
+                        Primary keyword: gut health for beginners
+                      </span>
+                    </div>
+                    <h3 style={{ fontFamily: "Georgia, serif", fontSize: "20px", fontWeight: 400, color: "#363633", marginBottom: "12px", lineHeight: 1.3 }}>
+                      The Gut-Brain Connection: Why Your Microbiome Shapes Everything
+                    </h3>
+                    <p style={{ fontSize: "15px", fontWeight: 500, color: "#526056", marginBottom: "16px", lineHeight: 1.6, borderLeft: "3px solid #526056", paddingLeft: "14px", fontStyle: "italic" }}>
+                      Most people treat their gut like a digestive organ. The latest research shows it's actually running your mood, your immune system, and your ability to focus — and most of us have spent years unknowingly damaging it.
+                    </p>
+                    <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.8, marginBottom: "16px" }}>
+                      In this episode, functional nutritionist Dr. Mara Chen breaks down the science of the gut microbiome in plain language — no jargon, no overwhelm. She explains how the trillions of bacteria living in your digestive system communicate directly with your brain through the vagus nerve, and why this "second brain" may be more influential than anyone previously understood.
+                    </p>
+                    <div style={{ background: "#FAFAF8", borderRadius: "8px", padding: "20px 24px", border: "0.5px solid #ECEAE4" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#897866", marginBottom: "14px" }}>
+                        What you'll learn
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {[
+                          "How the vagus nerve connects your gut and brain — and what disrupts that signal",
+                          "The 3 dietary shifts Dr. Chen prescribes before any supplement protocol",
+                          "Why diversity (not just quantity) of gut bacteria is the real marker of health",
+                          "A simple 5-day reset to begin rebuilding your microbiome this week",
+                        ].map((point) => (
+                          <div key={point} style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                            <CheckIcon />
+                            <span style={{ fontSize: "13px", color: "#363633", lineHeight: 1.6 }}>{point}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  </>
+                )}
+
+                {/* ── SEO TITLES ── */}
+                {activeTab === "SEO Titles" && (
+                  <>
+                    <div style={{ marginBottom: "20px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "3px 10px", display: "inline-block" }}>
+                        6 title variations generated
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      {[
+                        { title: "The Gut-Brain Connection: How Your Microbiome Controls Your Mood, Energy, and Focus", recommended: true },
+                        { title: "Gut Health for Beginners: What Dr. Mara Chen Wants Every Patient to Know First", recommended: false },
+                        { title: "Why Your Microbiome Is Your Second Brain (And How to Start Healing It This Week)", recommended: false },
+                        { title: "Fix Your Gut, Fix Your Brain: The Science of the Microbiome with Dr. Mara Chen", recommended: false },
+                      ].map(({ title, recommended }) => (
+                        <div
+                          key={title}
+                          style={{
+                            padding: "14px 18px",
+                            borderRadius: "8px",
+                            border: recommended ? "1.5px solid #526056" : "0.5px solid #ECEAE4",
+                            background: recommended ? "#F5F7F5" : "#FAFAF8",
+                            display: "flex",
+                            alignItems: "flex-start",
+                            justifyContent: "space-between",
+                            gap: "16px",
+                          }}
+                        >
+                          <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.6, margin: 0 }}>{title}</p>
+                          {recommended && (
+                            <span style={{
+                              flexShrink: 0,
+                              fontSize: "10px",
+                              fontWeight: 600,
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                              color: "white",
+                              background: "#526056",
+                              borderRadius: "4px",
+                              padding: "3px 9px",
+                              marginTop: "2px",
+                            }}>
+                              Recommended
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ fontSize: "12px", color: "#B0ADA6", marginTop: "16px" }}>
+                      Optimised for Apple Podcasts, Spotify, and YouTube search. Character counts within platform limits.
+                    </p>
+                  </>
+                )}
+
+                {/* ── SOCIAL ── */}
+                {activeTab === "Social" && (
+                  <>
+                    <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "3px 10px", display: "inline-block" }}>
+                        Instagram caption — variation 1 of 3
+                      </span>
+                    </div>
+                    <div style={{ background: "#FAFAF8", borderRadius: "8px", padding: "20px 24px", border: "0.5px solid #ECEAE4", marginBottom: "20px" }}>
+                      <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.85, margin: 0 }}>
+                        Your gut is running a parallel operation to your brain — and most of us have no idea. 🧠{"\n\n"}
+                        In this week's episode, Dr. Mara Chen breaks down exactly how your microbiome shapes your mood, your immune system, and even your ability to focus. The vagus nerve connection is wild, and the simple shifts she recommends are things you can start today.{"\n\n"}
+                        New episode is live — link in bio. 🎙️
+                      </p>
+                    </div>
+                    <div style={{ background: "#FAFAF8", borderRadius: "8px", padding: "16px 20px", border: "0.5px solid #ECEAE4" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#897866", marginBottom: "10px" }}>
+                        Hashtag strategy
+                      </p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {["#guthealth", "#microbiome", "#gutbrainconnection", "#functionalmedicine", "#healthpodcast", "#wellnesspodcast", "#guthealing", "#holistichealth", "#podcastersofinstagram", "#healthandwellness"].map((tag) => (
+                          <span key={tag} style={{ fontSize: "12px", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "3px 8px" }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ── EMAIL ── */}
+                {activeTab === "Email" && (
+                  <>
+                    <div style={{ marginBottom: "20px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#526056", background: "#EEF1EE", borderRadius: "4px", padding: "3px 10px", display: "inline-block" }}>
+                        Newsletter draft
+                      </span>
+                    </div>
+                    <div style={{ marginBottom: "20px", padding: "14px 18px", borderRadius: "8px", background: "#FAFAF8", border: "0.5px solid #ECEAE4" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#897866", marginBottom: "6px" }}>Subject line</p>
+                      <p style={{ fontSize: "15px", fontWeight: 500, color: "#363633", margin: 0 }}>
+                        Your gut is running your brain (and here's the research to prove it)
+                      </p>
+                    </div>
+                    <div style={{ marginBottom: "16px", padding: "14px 18px", borderRadius: "8px", background: "#FAFAF8", border: "0.5px solid #ECEAE4" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#897866", marginBottom: "8px" }}>Preview text</p>
+                      <p style={{ fontSize: "13px", color: "#897866", margin: 0, fontStyle: "italic" }}>
+                        Plus: the 3 dietary shifts Dr. Mara Chen recommends before any supplement.
+                      </p>
+                    </div>
+                    <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.9, marginBottom: "16px" }}>
+                      Hi [First Name],
+                    </p>
+                    <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.9, marginBottom: "16px" }}>
+                      Most of my listeners come to this podcast because something isn't working — their energy, their digestion, their mood — and they can't quite figure out why. If that sounds familiar, this week's episode might be the missing piece.
+                    </p>
+                    <p style={{ fontSize: "14px", color: "#363633", lineHeight: 1.9, marginBottom: "0" }}>
+                      I sat down with functional nutritionist Dr. Mara Chen to talk about the gut-brain axis — the direct communication highway between your digestive system and your mind. What she shared about the vagus nerve, and how quickly the microbiome can shift with the right inputs, genuinely surprised me. We also got into the three dietary changes she starts with every single client, and why reaching for a probiotic supplement first is usually the wrong move.
+                    </p>
+                  </>
+                )}
+
+                {/* ── PLACEHOLDER for other tabs ── */}
+                {!["Show Notes", "SEO Titles", "Social", "Email"].includes(activeTab) && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", flexDirection: "column", gap: "10px" }}>
+                    <p style={{ fontSize: "14px", color: "#B0ADA6" }}>
+                      <span style={{ color: "#526056", fontWeight: 500 }}>{activeTab}</span> output would appear here.
+                    </p>
+                    <p style={{ fontSize: "13px", color: "#C8C5BE" }}>All 26 assets generate in the same view.</p>
                   </div>
-                </div>
+                )}
 
                 {/* Copy button row */}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", gap: "10px" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "24px", gap: "10px" }}>
                   <div style={{ fontSize: "12px", color: "#B0ADA6", padding: "7px 14px", border: "0.5px solid #DADCD9", borderRadius: "6px", cursor: "default" }}>
                     Regenerate
                   </div>
